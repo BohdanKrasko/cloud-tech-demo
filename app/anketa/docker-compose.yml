@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+  mysql:
+    platform: linux/x86_64
+    image: mysql:latest
+    container_name: db_anketa
+    ports:
+      - 3306:3306
+    volumes:
+      - ./db/dump.sql:/docker-entrypoint-initdb.d/anketa.sql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: anketa
+      MYSQL_USER: user
+      MYSQL_PASSWORD: user
+    # networks:
+    #   - irc_anketa
+
+  # backend:
+  #   image: kraskobohdan/irc:backend
+  #   # build: backend
+  #   container_name: backend_anketa
+  #   ports:
+  #     - 3000:80
+  #   depends_on: 
+  #     mysql:
+  #       condition: service_healthy
+  #   networks:
+  #     - irc_anketa
+
+networks:
+    irc_anketa:
+        driver: bridge

@@ -1,0 +1,28 @@
+{
+  "name": "anketa",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@hapi/hapi": "^20.1.5",
+    "@hapi/inert": "^6.0.5",
+    "bcryptjs": "^2.4.3",
+    "child_process": "^1.0.2",
+    "hapi-auth-bearer-token": "^8.0.0",
+    "joi": "^17.4.2",
+    "jsonwebtoken": "^8.5.1",
+    "mysql2": "^2.3.0",
+    "nconf": "^0.11.3",
+    "util": "^0.12.4",
+    "uuid": "^8.3.2"
+  }
+}
