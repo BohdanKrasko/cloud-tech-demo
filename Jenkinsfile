@@ -49,8 +49,7 @@ pipeline {
             }
             steps {
                 withAWS(credentials:'cloud-tech', region:"${AWS_REGION}") {
-                    AWS("--region=eu-west-1 s3 ls")
-                    sh "\$(aws ecr get-login-password | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com) > /dev/null"
+                    AWS("\$(aws ecr get-login-password | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com) > /dev/null")
                 }
             }
         }
