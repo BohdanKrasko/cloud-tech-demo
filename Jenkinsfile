@@ -24,7 +24,7 @@ pipeline {
         // Locust specific environment variables
         REPO_NAME = "cloud-tech-demo"
         REPO_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO_NAME}"
-        VERSION = ""
+        // VERSION = ""
         
         // def buildDate = sh(script: "echo `date '+%Y-%m-%d_%H:%M:%S'`", returnStdout: true).trim()
     }
@@ -32,7 +32,7 @@ pipeline {
     stages {
         stage('Prepare tags for App') {
             when {
-              expression { params.action == 'deploy'}
+              expression { params.action == 'build'}
             }
             steps {
                 script {
