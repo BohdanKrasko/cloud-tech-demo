@@ -24,6 +24,7 @@ pipeline {
         // Locust specific environment variables
         REPO_NAME = "cloud-tech-demo"
         REPO_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO_NAME}"
+        VERSION = ""
         
         // def buildDate = sh(script: "echo `date '+%Y-%m-%d_%H:%M:%S'`", returnStdout: true).trim()
     }
@@ -48,12 +49,15 @@ pipeline {
               expression { params.action == 'build'}
             }
             steps {
-                withAwsCli(credentialsId:'cloud-tech', defaultRegion:"${AWS_REGION}") {
-                    sh "\$(aws ecr get-login --no-include-email --region=${AWS_REGION}) > /dev/null"
+                script {
+                    // withAwsCli(credentialsId:'cloud-tech', defaultRegion:"${AWS_REGION}") {
+                    //     sh "\$(aws ecr get-login --no-include-email --region=${AWS_REGION}) > /dev/null"
+                    // }
+                    withAWS(credentials:'cloud-tech', region:"${AWS_REGION}") {
+                        def login = ecrLogin(registryIds: [AWS_ACCOUNT_ID])
+                        sh login
+                    }
                 }
-                // withAWS(credentials:'cloud-tech', region:"${AWS_REGION}") {
-                //     AWS("`ecr get-login-password | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com`")
-                // }
             }
         }
 
@@ -63,8 +67,8 @@ pipeline {
             }
             steps {
                 dir ('app/anketa/db') {
-                    sh "docker build -t ${REPO_URI}:${REPO_NAME}-db-${VERSION} ."
-                    sh "docker push ${REPO_URI}:${REPO_NAME}-db-${VERSION}"
+                    sh "docker build -t ${REPO_URI}:${REPO_NAME}-db ."
+                    sh "docker push ${REPO_URI}:${REPO_NAME}-db"
                 }
             }
         }
