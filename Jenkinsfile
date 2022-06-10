@@ -40,6 +40,7 @@ pipeline {
                     GitTagNumber = sh(returnStdout: true, script: 'git describe --tags --always').trim()
                     shortGitTagNumber = GitTagNumber.take(20)
                     VERSION = "${shortGitTagNumber}_${BUILD_NUMBER}"
+                    echo VERSION
                 }
             }
         }
@@ -50,9 +51,6 @@ pipeline {
             }
             steps {
                 script {
-                    // withAwsCli(credentialsId:'cloud-tech', defaultRegion:"${AWS_REGION}") {
-                    //     sh "\$(aws ecr get-login --no-include-email --region=${AWS_REGION}) > /dev/null"
-                    // }
                     withAWS(credentials:'cloud-tech', region:"${AWS_REGION}") {
                         def login = ecrLogin(registryIds: [AWS_ACCOUNT_ID])
                         sh login
@@ -67,8 +65,8 @@ pipeline {
             }
             steps {
                 dir ('app/anketa/db') {
-                    sh "docker build -t ${REPO_URI}:${REPO_NAME}-db ."
-                    sh "docker push ${REPO_URI}:${REPO_NAME}-db"
+                    sh "docker build -t ${REPO_URI}:${REPO_NAME}-db-${VERSION} ."
+                    sh "docker push ${REPO_URI}:${REPO_NAME}-db-${VERSION}"
                 }
             }
         }
