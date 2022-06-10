@@ -48,9 +48,12 @@ pipeline {
               expression { params.action == 'build'}
             }
             steps {
-                withAWS(credentials:'cloud-tech', region:"${AWS_REGION}") {
-                    AWS("ecr get-login-password | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com")
+                withAwsCli(credentialsId:'cloud-tech', defaultRegion:"${AWS_REGION}") {
+                    sh "\$(aws ecr get-login --no-include-email --region=${AWS_REGION}) > /dev/null"
                 }
+                // withAWS(credentials:'cloud-tech', region:"${AWS_REGION}") {
+                //     AWS("`ecr get-login-password | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com`")
+                // }
             }
         }
 
