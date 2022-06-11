@@ -15,7 +15,7 @@ locals {
     cluster_name = aws_eks_cluster.cloud_tech_demo.name
     aws_profile = var.aws_worker_profile
   })
-  subnet_ids         = join(",", [ for s in aws_subnet.private.*.id : s ])
+  public_subnet_ids         = join(",", [ for s in aws_subnet.public.*.id : s ])
 }
 
 data "aws_subnets" "cloud_tech_demo" {
@@ -702,7 +702,7 @@ resource "kubernetes_ingress_v1" "dummy" {
       "alb.ingress.kubernetes.io/group.name"         = "stage.group"
       "alb.ingress.kubernetes.io/tags"               = join(",", [for key, value in var.cloud_tech_demo_tags : "${key}=${value}"])
       "alb.ingress.kubernetes.io/scheme"             = "internet-facing"
-      "alb.ingress.kubernetes.io/subnets"            = local.subnet_ids
+      "alb.ingress.kubernetes.io/subnets"            = local.public_subnet_ids
       # "alb.ingress.kubernetes.io/security-groups"    = aws_security_group.alb.id
       "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTP\": 80}]"
       # "alb.ingress.kubernetes.io/certificate-arn"    = ""
