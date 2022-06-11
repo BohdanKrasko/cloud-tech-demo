@@ -154,18 +154,18 @@ pipeline {
             }
         }
 
-        // stage('Destroy infra') {
-        //     when {
-        //         expression { params.action == 'destroy'}
-        //     }
-        //     steps {
-        //         dir('task_10') {
-        //             withAWS(credentials:'cloud-tech', region:'us-east-1') {
-        //                 sh 'terraform destroy -auto-approve'
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Destroy infra') {
+            when {
+                expression { params.action == 'destroy'}
+            }
+            steps {
+                dir('task_10') {
+                    withAWS(credentials:'cloud-tech', region:'us-east-1') {
+                        sh 'terraform destroy -auto-approve'
+                    }
+                }
+            }
+        }
     }
 
     post {
