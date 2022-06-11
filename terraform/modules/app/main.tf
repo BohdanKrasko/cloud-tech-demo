@@ -84,7 +84,6 @@ resource "kubernetes_secret" "db_creds" {
     namespace = kubernetes_namespace.namespace.metadata[0].name
   }
 
-  # In further will get data from AWS Secrets Manager (Account ID: 635040201264)
   data = {
     mysql_root_password = "root"
     mysql_database = "anketa"
@@ -182,11 +181,11 @@ resource "kubernetes_deployment_v1" "cloud_tech_demo_db" {
 
           resources {
             limits = {
-              cpu    = "0.5"
+              cpu    = "0.25"
               memory = "512Mi"
             }
             requests = {
-              cpu    = "0.5"
+              cpu    = "0.25"
               memory = "512Mi"
             }
           }
@@ -245,11 +244,11 @@ resource "kubernetes_deployment_v1" "cloud_tech_demo_backend" {
 
           resources {
             limits = {
-              cpu    = "0.5"
+              cpu    = "0.25"
               memory = "512Mi"
             }
             requests = {
-              cpu    = "0.5"
+              cpu    = "0.25"
               memory = "512Mi"
             }
           }
@@ -308,11 +307,11 @@ resource "kubernetes_deployment_v1" "cloud_tech_demo_frontend" {
 
           resources {
             limits = {
-              cpu    = "0.5"
+              cpu    = "0.25"
               memory = "512Mi"
             }
             requests = {
-              cpu    = "0.5"
+              cpu    = "0.25"
               memory = "512Mi"
             }
           }
