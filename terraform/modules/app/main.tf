@@ -585,11 +585,6 @@ resource "kubernetes_ingress_v1" "frontend_443" {
   }
 }
 
-data "aws_route53_zone" "cloud_tech_demo" {
-  name         = var.hosted_zone_name
-  private_zone = false
-}
-
 resource "aws_route53_record" "backend" {
   allow_overwrite = true
   name            = "backend.${kubernetes_namespace.namespace.metadata[0].name}.${var.hosted_zone_name}"
