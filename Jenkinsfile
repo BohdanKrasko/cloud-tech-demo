@@ -13,6 +13,12 @@ pipeline {
             description: '',
             name: 'action'
         )
+        choice (
+            choices: ['stage', 'prod'],
+            description: '',
+            name: 'env'
+        )
+
     }
 
     environment {
@@ -24,9 +30,9 @@ pipeline {
         // Locust specific environment variables
         REPO_NAME = "cloud-tech-demo"
         REPO_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO_NAME}"
-        // VERSION = ""
-        
-        // def buildDate = sh(script: "echo `date '+%Y-%m-%d_%H:%M:%S'`", returnStdout: true).trim()
+        DB_CREDS = credentials('db_cred')
+        SECRET_KEY = credentials('secret_key')
+
     }
 
     stages {
@@ -39,8 +45,7 @@ pipeline {
                     // Set the image version based on tag number
                     GitTagNumber = sh(returnStdout: true, script: 'git describe --tags --always').trim()
                     shortGitTagNumber = GitTagNumber.take(20)
-                    VERSION = "${shortGitTagNumber}_${BUILD_NUMBER}"
-                    echo VERSION
+                    VERSION = "${shortGitTagNumber}-${BUILD_NUMBER}"
                 }
             }
         }
@@ -70,6 +75,30 @@ pipeline {
                 }
             }
         }
+
+        stage('Update config/config.json') {
+            steps {                 
+                //Update config/config.json file with secrets arn and save file into config/server.json
+                sh "rm config/server.json"
+                sh "sed -e \"s@%DB_HOST%@db-${params.env}-irc@g\"\
+                    -e \"s@%DB_USERNAME%@${DB_CREDS_USR}@g\"\
+                    -e \"s@%DB_PASSWORD%@${DB_CREDS_PSW}@g\"\
+                    -e \"s@%SECRET_KEY%@${SECRET_KEY}@g\" config/server.json.tmp > config/server.json"       
+                sh "cat config/server.json"    
+            }
+        }
+
+        // stage ('Build Backand image and push to ECR') {
+        //     when {
+        //       expression { params.action == 'build'}
+        //     }
+        //     steps {
+        //         dir ('app/anketa/') {
+        //             sh "docker build -t ${REPO_URI}:${REPO_NAME}-backend-${VERSION} ."
+        //             sh "docker push ${REPO_URI}:${REPO_NAME}-backend-${VERSION}"
+        //         }
+        //     }
+        // }
         // stage('Terraform init') {
         //     steps {
         //         dir('task_10') {

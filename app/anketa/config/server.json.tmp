@@ -1,0 +1,15 @@
+{
+    "host": "0.0.0.0",
+    "port": 3000,
+    "db": {
+        "host": "%DB_HOST%",
+        "username": "%DB_USERNAME%",
+        "database": "anketa",
+        "password": "%DB_PASSWORD%",
+        "port": 3306,
+        "connection_limit": 8
+    },
+    "jwt": {
+        "secret_key": "%SECRET_KEY%"
+    }
+}
