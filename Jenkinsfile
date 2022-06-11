@@ -159,7 +159,7 @@ pipeline {
                 expression { params.action == 'destroy'}
             }
             steps {
-                dir('task_10') {
+                dir('terraform') {
                     withAWS(credentials:'cloud-tech', region:'us-east-1') {
                         sh 'terraform destroy -auto-approve'
                     }
