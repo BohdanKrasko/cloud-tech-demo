@@ -40,7 +40,7 @@ provider "kubectl" {
 
 # Configure terraform to use tfstate file from S3 bucket.
 terraform {
-  required_version = "= 1.1.8"
+  required_version = "= 1.1.9"
 
   backend "s3" {
     # profile        = "cloud-tech"
