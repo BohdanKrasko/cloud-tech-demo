@@ -431,9 +431,8 @@ resource "kubernetes_ingress_v1" "backend_80" {
       "alb.ingress.kubernetes.io/tags"               = join(",", [for key, value in var.cloud_tech_demo_tags : "${key}=${value}"])
       "alb.ingress.kubernetes.io/scheme"             = "internet-facing"
       "alb.ingress.kubernetes.io/subnets"            = local.public_subnet_ids
-      # "alb.ingress.kubernetes.io/security-groups"    = data.aws_security_group.alb.id
       "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTP\": 80}]"
-      # "alb.ingress.kubernetes.io/certificate-arn"    = each.value.backend_protocol == "HTTPS" ? data.aws_acm_certificate.cert.arn : ""
+      "alb.ingress.kubernetes.io/ssl-redirect"       = 1
       "alb.ingress.kubernetes.io/target-type"        = "ip"
       "alb.ingress.kubernetes.io/backend-protocol"   = "HTTP"
       "nginx.ingress.kubernetes.io/rewrite-target"   = "/"
@@ -475,6 +474,7 @@ resource "kubernetes_ingress_v1" "backend_443" {
       "alb.ingress.kubernetes.io/subnets"            = local.public_subnet_ids
       "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTPS\": 443}]"
       "alb.ingress.kubernetes.io/certificate-arn"    = aws_acm_certificate.cert.arn
+      "alb.ingress.kubernetes.io/ssl-redirect"       = 1
       "alb.ingress.kubernetes.io/target-type"        = "ip"
       "alb.ingress.kubernetes.io/backend-protocol"   = "HTTP"
       "nginx.ingress.kubernetes.io/rewrite-target"   = "/"
@@ -514,9 +514,8 @@ resource "kubernetes_ingress_v1" "frontend_80" {
       "alb.ingress.kubernetes.io/tags"               = join(",", [for key, value in var.cloud_tech_demo_tags : "${key}=${value}"])
       "alb.ingress.kubernetes.io/scheme"             = "internet-facing"
       "alb.ingress.kubernetes.io/subnets"            = local.public_subnet_ids
-      # "alb.ingress.kubernetes.io/security-groups"    = data.aws_security_group.alb.id
       "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTP\": 80}]"
-      # "alb.ingress.kubernetes.io/certificate-arn"    = each.value.backend_protocol == "HTTPS" ? data.aws_acm_certificate.cert.arn : ""
+      "alb.ingress.kubernetes.io/ssl-redirect"       = 1
       "alb.ingress.kubernetes.io/target-type"        = "ip"
       "alb.ingress.kubernetes.io/backend-protocol"   = "HTTP"
       "nginx.ingress.kubernetes.io/rewrite-target"   = "/"
@@ -558,6 +557,7 @@ resource "kubernetes_ingress_v1" "frontend_443" {
       "alb.ingress.kubernetes.io/subnets"            = local.public_subnet_ids
       "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTPS\": 443}]"
       "alb.ingress.kubernetes.io/certificate-arn"    = aws_acm_certificate.cert.arn
+      "alb.ingress.kubernetes.io/ssl-redirect"       = 1
       "alb.ingress.kubernetes.io/target-type"        = "ip"
       "alb.ingress.kubernetes.io/backend-protocol"   = "HTTP"
       "nginx.ingress.kubernetes.io/rewrite-target"   = "/"
