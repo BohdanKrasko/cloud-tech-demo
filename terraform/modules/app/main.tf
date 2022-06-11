@@ -62,7 +62,7 @@ resource "kubernetes_secret" "db_creds" {
 data "aws_caller_identity" "current" {}
 
 data "aws_ssm_parameter" "cloud_tech_demo_db" {
-  name = "/cloud-tech-demo/frontend/${terraform.workspace}"
+  name = "/cloud-tech-demo/db/${terraform.workspace}"
 }
 
 resource "kubernetes_deployment_v1" "cloud_tech_demo_db" {
