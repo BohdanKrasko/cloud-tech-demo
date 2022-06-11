@@ -418,7 +418,7 @@ resource "kubernetes_ingress_v1" "frontend" {
   wait_for_load_balancer = true
 
   metadata {
-    name      = "frontend-${terraform.workspace}-${var.project}-port-3000"
+    name      = "frontend-${terraform.workspace}-${var.project}-port-80"
     namespace = kubernetes_namespace.namespace.metadata[0].name
     annotations = {
       "alb.ingress.kubernetes.io/load-balancer-name" = var.alb_name
