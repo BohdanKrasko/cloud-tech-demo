@@ -76,7 +76,7 @@ pipeline {
             }
         }
 
-        stage('Update config/config.json') {
+        stage('Update config/server.json') {
             steps {         
                 dir ('app/anketa') {
                     //Update config/config.json file with secrets arn and save file into config/server.json
@@ -90,17 +90,17 @@ pipeline {
             }
         }
 
-        // stage ('Build Backand image and push to ECR') {
-        //     when {
-        //       expression { params.action == 'build'}
-        //     }
-        //     steps {
-        //         dir ('app/anketa/') {
-        //             sh "docker build -t ${REPO_URI}:${REPO_NAME}-backend-${VERSION} ."
-        //             sh "docker push ${REPO_URI}:${REPO_NAME}-backend-${VERSION}"
-        //         }
-        //     }
-        // }
+        stage ('Build Backand image and push to ECR') {
+            when {
+              expression { params.action == 'build'}
+            }
+            steps {
+                dir ('app/anketa') {
+                    sh "docker build -t ${REPO_URI}:${REPO_NAME}-backend-${VERSION} ."
+                    sh "docker push ${REPO_URI}:${REPO_NAME}-backend-${VERSION}"
+                }
+            }
+        }
         // stage('Terraform init') {
         //     steps {
         //         dir('task_10') {
