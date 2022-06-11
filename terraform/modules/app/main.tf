@@ -544,7 +544,7 @@ resource "kubernetes_ingress_v1" "frontend_80" {
   }
 }
 
-resource "kubernetes_ingress_v1" "frontend_80" {
+resource "kubernetes_ingress_v1" "frontend_443" {
   wait_for_load_balancer = true
 
   metadata {
