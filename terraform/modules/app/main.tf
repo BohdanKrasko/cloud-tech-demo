@@ -1,8 +1,8 @@
-data "aws_eks_cluster" "testenvenv" {
+data "aws_eks_cluster" "cloud_tech_demo" {
   name = var.cluster_name
 }
 
-data "aws_eks_cluster_auth" "testenvenv" {
+data "aws_eks_cluster_auth" "cloud_tech_demo" {
   name = var.cluster_name
 }
 
