@@ -23,6 +23,11 @@ data "aws_subnets" "cloud_tech_demo" {
     name   = "vpc-id"
     values = [ var.vpc.id ]
   }
+
+  depends_on = [
+    aws_subnet.public,
+    aws_subnet.private
+  ]
 }
 
 # data "aws_subnets" "private" {
