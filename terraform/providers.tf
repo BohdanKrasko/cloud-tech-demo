@@ -1,7 +1,7 @@
 provider "aws" {
   region                   = var.region
-  shared_credentials_files = [ var.shared_credentials_file ]
-  profile                  = var.aws_worker_profile
+  # shared_credentials_files = [ var.shared_credentials_file ]
+  # profile                  = var.aws_worker_profile
 }
 
 # data "aws_eks_cluster" "cloud_tech_demo" {
@@ -43,7 +43,7 @@ terraform {
   required_version = "= 1.1.8"
 
   backend "s3" {
-    profile        = "cloud-tech"
+    # profile        = "cloud-tech"
     region         = "us-east-1"
     key            = "cloud-tech/terraform.tfstate"
     bucket         = "terraform-state-lock-cloud-demo"

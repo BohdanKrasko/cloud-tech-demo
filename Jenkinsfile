@@ -73,6 +73,9 @@ pipeline {
                     sh "docker build -t ${REPO_URI}:${REPO_NAME}-${params.env}-db-${VERSION} ."
                     sh "docker push ${REPO_URI}:${REPO_NAME}-${params.env}-db-${VERSION}"
                 }
+                withAWS(credentials:'cloud-tech', region:"${AWS_REGION}") {
+                    sh "aws ssm put-parameter --name '/cloud-tech-demo/db/${params.env}' --type 'SecureString' --value ${REPO_NAME}-${params.env}-db-${VERSION} --overwrite"
+                }
             }
         }
 
@@ -99,6 +102,9 @@ pipeline {
                     sh "docker build -t ${REPO_URI}:${REPO_NAME}-${params.env}-backend-${VERSION} ."
                     sh "docker push ${REPO_URI}:${REPO_NAME}-${params.env}-backend-${VERSION}"
                 }
+                withAWS(credentials:'cloud-tech', region:"${AWS_REGION}") {
+                    sh "aws ssm put-parameter --name '/cloud-tech-demo/backend/${params.env}' --type 'SecureString' --value ${REPO_NAME}-${params.env}-backend-${VERSION} --overwrite"
+                }
             }
         }
 
@@ -111,32 +117,39 @@ pipeline {
                     sh "docker build -t ${REPO_URI}:${REPO_NAME}-${params.env}-frontend-${VERSION} . --build-arg REACT_APP_HOST=http://backend.${params.env}.cloud-tech-demo.pp.ua"
                     sh "docker push ${REPO_URI}:${REPO_NAME}-${params.env}-frontend-${VERSION}"
                 }
+                withAWS(credentials:'cloud-tech', region:"${AWS_REGION}") {
+                    sh "aws ssm put-parameter --name '/cloud-tech-demo/frontend/${params.env}' --type 'SecureString' --value ${REPO_NAME}-${params.env}-frontend-${VERSION} --overwrite"
+                }
             }
         }
-        // stage('Terraform init') {
-        //     steps {
-        //         dir('task_10') {
-        //             withAWS(credentials:'cloud-tech', region:'us-east-1') {
-        //                 sh 'terraform init'
-        //             }
-        //         }
-        //     }
-        // }
 
-        // stage('Deploy infra') {
-        //     when {
-        //         expression { params.action == 'start'}
-        //     }
-        //     steps {
-                
-        //         dir('task_10') {
-        //             withAWS(credentials:'cloud-tech', region:'us-east-1') {
-        //                 sh 'terraform plan'
-        //                 sh 'terraform apply -auto-approve'
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Terraform init and select workspace') {
+            when {
+              expression { params.action == 'deploy' || params.action == 'destroy'}
+            }
+            steps {
+                dir('terraform') {
+                    withAWS(credentials:'cloud-tech', region:'us-east-1') {
+                        sh 'terraform init'
+                        sh "terraform workspace select ${params.env}"
+                    }
+                }
+            }
+        }
+
+        stage('Deploy infra') {
+            when {
+              expression { params.action == 'deploy'}
+            }
+            steps {
+                dir('terraform') {
+                    withAWS(credentials:'cloud-tech', region:'us-east-1') {
+                        sh 'terraform plan'
+                        sh 'terraform apply -auto-approve'
+                    }
+                }
+            }
+        }
 
         // stage('Destroy infra') {
         //     when {

@@ -1,7 +1,3 @@
-variable "env" {
-  description = ""
-}
-
 variable "project" {
   description = ""
 }
@@ -23,5 +19,9 @@ variable "alb_name" {
 }
 
 variable "cluster_name" {
+  description = ""
+}
+
+variable "ecr_rep" {
   description = ""
 }

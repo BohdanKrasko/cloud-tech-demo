@@ -31,11 +31,6 @@ variable "cluster_name" {
   default = "cloud-tech-demo"
 }
 
-variable "env" {
-  description = ""
-  default = "stage"
-}
-
 variable "project" {
   description = ""
   default = "irc"

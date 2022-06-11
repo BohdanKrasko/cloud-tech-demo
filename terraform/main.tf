@@ -39,13 +39,13 @@ module "eks" {
 module "app" {
   count = terraform.workspace == "default" ? 0 : 1
   source       = "./modules/app"
-  env = var.env
   project = var.project
   cloud_tech_demo_tags = var.cloud_tech_demo_tags
   region = var.region
   hosted_zone_name = var.hosted_zone_name
   alb_name = var.alb_name
   cluster_name = var.cluster_name
+  ecr_rep = var.ecr_rep
 }
 
 module "state_locking" {
