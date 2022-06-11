@@ -77,14 +77,16 @@ pipeline {
         }
 
         stage('Update config/config.json') {
-            steps {                 
-                //Update config/config.json file with secrets arn and save file into config/server.json
-                sh "rm config/server.json"
-                sh "sed -e \"s@%DB_HOST%@db-${params.env}-irc@g\"\
-                    -e \"s@%DB_USERNAME%@${DB_CREDS_USR}@g\"\
-                    -e \"s@%DB_PASSWORD%@${DB_CREDS_PSW}@g\"\
-                    -e \"s@%SECRET_KEY%@${SECRET_KEY}@g\" config/server.json.tmp > config/server.json"       
-                sh "cat config/server.json"    
+            steps {         
+                dir ('app/anketa') {
+                    //Update config/config.json file with secrets arn and save file into config/server.json
+                    sh "rm config/server.json"
+                    sh "sed -e \"s@%DB_HOST%@db-${params.env}-irc@g\"\
+                        -e \"s@%DB_USERNAME%@${DB_CREDS_USR}@g\"\
+                        -e \"s@%DB_PASSWORD%@${DB_CREDS_PSW}@g\"\
+                        -e \"s@%SECRET_KEY%@${SECRET_KEY}@g\" config/server.json.tmp > config/server.json"       
+                    sh "cat config/server.json"   
+                }        
             }
         }
 
