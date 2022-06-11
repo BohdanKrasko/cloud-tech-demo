@@ -72,6 +72,7 @@ pipeline {
                 dir ('app/anketa/db') {
                     sh "docker build -t ${REPO_URI}:${REPO_NAME}-${params.env}-db-${VERSION} ."
                     sh "docker push ${REPO_URI}:${REPO_NAME}-${params.env}-db-${VERSION}"
+                    sh "docker rmi ${REPO_URI}:${REPO_NAME}-${params.env}-db-${VERSION}"
                 }
                 withAWS(credentials:'cloud-tech', region:"${AWS_REGION}") {
                     sh "aws ssm put-parameter --name '/cloud-tech-demo/db/${params.env}' --type 'SecureString' --value ${REPO_NAME}-${params.env}-db-${VERSION} --overwrite"
@@ -101,6 +102,7 @@ pipeline {
                 dir ('app/anketa') {
                     sh "docker build -t ${REPO_URI}:${REPO_NAME}-${params.env}-backend-${VERSION} ."
                     sh "docker push ${REPO_URI}:${REPO_NAME}-${params.env}-backend-${VERSION}"
+                    sh "docker rmi ${REPO_URI}:${REPO_NAME}-${params.env}-backend-${VERSION}"
                 }
                 withAWS(credentials:'cloud-tech', region:"${AWS_REGION}") {
                     sh "aws ssm put-parameter --name '/cloud-tech-demo/backend/${params.env}' --type 'SecureString' --value ${REPO_NAME}-${params.env}-backend-${VERSION} --overwrite"
@@ -116,6 +118,7 @@ pipeline {
                 dir ('app/anketa/frontend') {
                     sh "docker build -t ${REPO_URI}:${REPO_NAME}-${params.env}-frontend-${VERSION} . --build-arg REACT_APP_HOST=http://backend.${params.env}.cloud-tech-demo.pp.ua"
                     sh "docker push ${REPO_URI}:${REPO_NAME}-${params.env}-frontend-${VERSION}"
+                    sh "docker rmi ${REPO_URI}:${REPO_NAME}-${params.env}-frontend-${VERSION}"
                 }
                 withAWS(credentials:'cloud-tech', region:"${AWS_REGION}") {
                     sh "aws ssm put-parameter --name '/cloud-tech-demo/frontend/${params.env}' --type 'SecureString' --value ${REPO_NAME}-${params.env}-frontend-${VERSION} --overwrite"
