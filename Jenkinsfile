@@ -70,8 +70,8 @@ pipeline {
             }
             steps {
                 dir ('app/anketa/db') {
-                    sh "docker build -t ${REPO_URI}:${REPO_NAME}-db-${VERSION} ."
-                    sh "docker push ${REPO_URI}:${REPO_NAME}-db-${VERSION}"
+                    sh "docker build -t ${REPO_URI}:${REPO_NAME}-${params.env}-db-${VERSION} ."
+                    sh "docker push ${REPO_URI}:${REPO_NAME}-${params.env}-db-${VERSION}"
                 }
             }
         }
@@ -96,8 +96,20 @@ pipeline {
             }
             steps {
                 dir ('app/anketa') {
-                    sh "docker build -t ${REPO_URI}:${REPO_NAME}-backend-${VERSION} ."
-                    sh "docker push ${REPO_URI}:${REPO_NAME}-backend-${VERSION}"
+                    sh "docker build -t ${REPO_URI}:${REPO_NAME}-${params.env}-backend-${VERSION} ."
+                    sh "docker push ${REPO_URI}:${REPO_NAME}-${params.env}-backend-${VERSION}"
+                }
+            }
+        }
+
+        stage ('Build Frontend image and push to ECR') {
+            when {
+              expression { params.action == 'build'}
+            }
+            steps {
+                dir ('app/anketa/frontend') {
+                    sh "docker build -t ${REPO_URI}:${REPO_NAME}-${params.env}-frontend-${VERSION} . --build-arg REACT_APP_HOST=http://backend.${params.env}.cloud-tech-demo.pp.ua"
+                    sh "docker push ${REPO_URI}:${REPO_NAME}-${params.env}-frontend-${VERSION}"
                 }
             }
         }
