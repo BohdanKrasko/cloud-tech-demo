@@ -43,3 +43,7 @@ variable "hosted_zone_name" {
 variable "alb_name" {
   default = "cloud-tech-demo"
 }
+
+variable "vpc_name" {
+  default = "cloud-tech-demo-vpc"
+}

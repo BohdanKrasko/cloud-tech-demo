@@ -25,3 +25,6 @@ variable "cluster_name" {
 variable "ecr_rep" {
   description = ""
 }
+
+variable "vpc_name" {
+}

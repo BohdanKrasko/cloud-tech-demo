@@ -33,7 +33,7 @@ resource "aws_vpc" "vpc" {
   enable_dns_hostnames = true
   enable_dns_support   = true
 
-  tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "cloud-tech-demo-vpc" }))
+  tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = var.vpc_name }))
 }
 
 # SSM Parameters

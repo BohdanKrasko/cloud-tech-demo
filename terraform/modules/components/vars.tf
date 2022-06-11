@@ -17,3 +17,6 @@ variable "cloud_tech_demo_tags" {
 variable "ecr_rep" {
   description = ""
 }
+
+variable "vpc_name" {
+}

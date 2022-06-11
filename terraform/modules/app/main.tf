@@ -1,3 +1,28 @@
+locals {
+  public_subnet_ids         = join(",", [ for s in data.aws_subnet.cloud_tech_demo : s.id ]) 
+}
+
+data "aws_vpc" "cloud_tech_demo" {
+  tags = {
+    Name = var.vpc_name
+  }
+}
+
+data "aws_subnets" "cloud_tech_demo" {
+  filter {
+    name   = "vpc-id"
+    values = [ data.aws_vpc.cloud_tech_demo.id ]
+  }
+  tags = {
+    Tier = "Public"
+  }
+}
+
+data "aws_subnet" "cloud_tech_demo" {
+  for_each = toset(data.aws_subnets.cloud_tech_demo.ids)
+  id       = each.value
+}
+
 data "aws_eks_cluster" "cloud_tech_demo" {
   name = var.cluster_name
 }
@@ -358,7 +383,7 @@ resource "kubernetes_ingress_v1" "backend" {
       "alb.ingress.kubernetes.io/group.name"         = "stage.group"
       "alb.ingress.kubernetes.io/tags"               = join(",", [for key, value in var.cloud_tech_demo_tags : "${key}=${value}"])
       "alb.ingress.kubernetes.io/scheme"             = "internet-facing"
-      "alb.ingress.kubernetes.io/subnets"            = "subnet-00507a1542f873ac5,subnet-09c3673129cdb146c"
+      "alb.ingress.kubernetes.io/subnets"            = local.public_subnet_ids
       # "alb.ingress.kubernetes.io/security-groups"    = data.aws_security_group.alb.id
       "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTP\": 80}]"
       # "alb.ingress.kubernetes.io/certificate-arn"    = each.value.backend_protocol == "HTTPS" ? data.aws_acm_certificate.cert.arn : ""
@@ -400,7 +425,7 @@ resource "kubernetes_ingress_v1" "frontend" {
       "alb.ingress.kubernetes.io/group.name"         = "stage.group"
       "alb.ingress.kubernetes.io/tags"               = join(",", [for key, value in var.cloud_tech_demo_tags : "${key}=${value}"])
       "alb.ingress.kubernetes.io/scheme"             = "internet-facing"
-      "alb.ingress.kubernetes.io/subnets"            = "subnet-00507a1542f873ac5,subnet-09c3673129cdb146c"
+      "alb.ingress.kubernetes.io/subnets"            = local.public_subnet_ids
       # "alb.ingress.kubernetes.io/security-groups"    = data.aws_security_group.alb.id
       "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTP\": 80}]"
       # "alb.ingress.kubernetes.io/certificate-arn"    = each.value.backend_protocol == "HTTPS" ? data.aws_acm_certificate.cert.arn : ""
