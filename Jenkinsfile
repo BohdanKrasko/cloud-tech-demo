@@ -64,51 +64,51 @@ pipeline {
             }
         }
 
-        // stage ('Build DB image and push to ECR') {
-        //     when {
-        //       expression { params.action == 'build'}
-        //     }
-        //     steps {
-        //         dir ('app/anketa/db') {
-        //             sh "docker build -t ${REPO_URI}:${REPO_NAME}-${params.env}-db-${VERSION} ."
-        //             sh "docker push ${REPO_URI}:${REPO_NAME}-${params.env}-db-${VERSION}"
-        //             sh "docker rmi ${REPO_URI}:${REPO_NAME}-${params.env}-db-${VERSION}"
-        //         }
-        //         withAWS(credentials:'cloud-tech', region:"${AWS_REGION}") {
-        //             sh "aws ssm put-parameter --name '/cloud-tech-demo/db/${params.env}' --type 'SecureString' --value ${REPO_NAME}-${params.env}-db-${VERSION} --overwrite"
-        //         }
-        //     }
-        // }
+        stage ('Build DB image and push to ECR') {
+            when {
+              expression { params.action == 'build'}
+            }
+            steps {
+                dir ('app/anketa/db') {
+                    sh "docker build -t ${REPO_URI}:${REPO_NAME}-${params.env}-db-${VERSION} ."
+                    sh "docker push ${REPO_URI}:${REPO_NAME}-${params.env}-db-${VERSION}"
+                    sh "docker rmi ${REPO_URI}:${REPO_NAME}-${params.env}-db-${VERSION}"
+                }
+                withAWS(credentials:'cloud-tech', region:"${AWS_REGION}") {
+                    sh "aws ssm put-parameter --name '/cloud-tech-demo/db/${params.env}' --type 'SecureString' --value ${REPO_NAME}-${params.env}-db-${VERSION} --overwrite"
+                }
+            }
+        }
 
-        // stage('Update config/server.json') {
-        //     steps {         
-        //         dir ('app/anketa') {
-        //             //Update config/config.json file with secrets arn and save file into config/server.json
-        //             sh "rm config/server.json"
-        //             sh "sed -e \"s@%DB_HOST%@db-${params.env}-irc@g\"\
-        //                 -e \"s@%DB_USERNAME%@${DB_CREDS_USR}@g\"\
-        //                 -e \"s@%DB_PASSWORD%@${DB_CREDS_PSW}@g\"\
-        //                 -e \"s@%SECRET_KEY%@${SECRET_KEY}@g\" config/server.json.tmp > config/server.json"       
-        //             sh "cat config/server.json"   
-        //         }        
-        //     }
-        // }
+        stage('Update config/server.json') {
+            steps {         
+                dir ('app/anketa') {
+                    //Update config/config.json file with secrets arn and save file into config/server.json
+                    sh "rm config/server.json"
+                    sh "sed -e \"s@%DB_HOST%@db-${params.env}-irc@g\"\
+                        -e \"s@%DB_USERNAME%@${DB_CREDS_USR}@g\"\
+                        -e \"s@%DB_PASSWORD%@${DB_CREDS_PSW}@g\"\
+                        -e \"s@%SECRET_KEY%@${SECRET_KEY}@g\" config/server.json.tmp > config/server.json"       
+                    sh "cat config/server.json"   
+                }        
+            }
+        }
 
-        // stage ('Build Backand image and push to ECR') {
-        //     when {
-        //       expression { params.action == 'build'}
-        //     }
-        //     steps {
-        //         dir ('app/anketa') {
-        //             sh "docker build -t ${REPO_URI}:${REPO_NAME}-${params.env}-backend-${VERSION} ."
-        //             sh "docker push ${REPO_URI}:${REPO_NAME}-${params.env}-backend-${VERSION}"
-        //             sh "docker rmi ${REPO_URI}:${REPO_NAME}-${params.env}-backend-${VERSION}"
-        //         }
-        //         withAWS(credentials:'cloud-tech', region:"${AWS_REGION}") {
-        //             sh "aws ssm put-parameter --name '/cloud-tech-demo/backend/${params.env}' --type 'SecureString' --value ${REPO_NAME}-${params.env}-backend-${VERSION} --overwrite"
-        //         }
-        //     }
-        // }
+        stage ('Build Backand image and push to ECR') {
+            when {
+              expression { params.action == 'build'}
+            }
+            steps {
+                dir ('app/anketa') {
+                    sh "docker build -t ${REPO_URI}:${REPO_NAME}-${params.env}-backend-${VERSION} ."
+                    sh "docker push ${REPO_URI}:${REPO_NAME}-${params.env}-backend-${VERSION}"
+                    sh "docker rmi ${REPO_URI}:${REPO_NAME}-${params.env}-backend-${VERSION}"
+                }
+                withAWS(credentials:'cloud-tech', region:"${AWS_REGION}") {
+                    sh "aws ssm put-parameter --name '/cloud-tech-demo/backend/${params.env}' --type 'SecureString' --value ${REPO_NAME}-${params.env}-backend-${VERSION} --overwrite"
+                }
+            }
+        }
 
         stage ('Build Frontend image and push to ECR') {
             when {
@@ -116,7 +116,7 @@ pipeline {
             }
             steps {
                 dir ('app/anketa/frontend') {
-                    sh "docker build -t ${REPO_URI}:${REPO_NAME}-${params.env}-frontend-${VERSION} . --build-arg REACT_APP_HOST=backend-${params.env}-irc"
+                    sh "docker build -t ${REPO_URI}:${REPO_NAME}-${params.env}-frontend-${VERSION} . --build-arg REACT_APP_HOST=https://backend.${params.env}.cloud-tech-demo.pp.ua"
                     sh "docker push ${REPO_URI}:${REPO_NAME}-${params.env}-frontend-${VERSION}"
                     sh "docker rmi ${REPO_URI}:${REPO_NAME}-${params.env}-frontend-${VERSION}"
                 }
