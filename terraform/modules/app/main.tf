@@ -1,3 +1,11 @@
+data "aws_eks_cluster" "testenvenv" {
+  name = var.cluster_name
+}
+
+data "aws_eks_cluster_auth" "testenvenv" {
+  name = var.cluster_name
+}
+
 # NAMESPACES
 resource "kubernetes_namespace" "namespace" {
   metadata {
