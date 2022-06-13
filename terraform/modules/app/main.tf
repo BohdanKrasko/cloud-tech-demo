@@ -612,7 +612,7 @@ resource "kubernetes_ingress_v1" "backend_8080" {
       "alb.ingress.kubernetes.io/subnets"            = local.public_subnet_ids
       "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTPS\": 8080}]"
       "alb.ingress.kubernetes.io/certificate-arn"    = aws_acm_certificate.cert.arn
-      "alb.ingress.kubernetes.io/ssl-redirect"       = 8080
+      # "alb.ingress.kubernetes.io/ssl-redirect"       = 8080
       "alb.ingress.kubernetes.io/target-type"        = "ip"
       "alb.ingress.kubernetes.io/backend-protocol"   = "HTTP"
       "nginx.ingress.kubernetes.io/rewrite-target"   = "/"
