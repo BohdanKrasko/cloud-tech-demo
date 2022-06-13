@@ -460,6 +460,11 @@ resource "aws_eks_addon" "kube_proxy" {
 #IAM ROLE FOR SERVICE ACCOUNT
 data "tls_certificate" "cloud_tech_demo" {
   url = aws_eks_cluster.cloud_tech_demo.identity[0].oidc[0].issuer
+
+  depends_on = [
+    aws_eks_cluster.cloud_tech_demo,
+    aws_security_group_rule.inbound_rule_allow_https
+  ]
 }
 
 data "aws_iam_policy_document" "cloud_tech_demo_assume_role_policy" {
@@ -671,14 +676,59 @@ resource "kubectl_manifest" "ingress_alb_controller" {
 
   depends_on = [
     kubectl_manifest.cert_manager,
-    aws_eks_fargate_profile.kube_system
+    aws_eks_fargate_profile.kube_system,
+    kubernetes_service_account.cloud_tech_demo
   ]
+}
+
+# SSL Cert
+resource "aws_acm_certificate" "cert" {
+  domain_name               = "dummy.${var.hosted_zone_name}"
+  validation_method         = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "dummy.${var.hosted_zone_name}-cert" }))
+}
+
+data "aws_route53_zone" "cloud_tech_demo" {
+  name         = var.hosted_zone_name
+  private_zone = false
+}
+
+resource "aws_route53_record" "cert" {
+  for_each = {
+    for dvo in aws_acm_certificate.cert.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [ each.value.record ]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = data.aws_route53_zone.cloud_tech_demo.zone_id
+}
+
+resource "aws_acm_certificate_validation" "cert" {
+  certificate_arn         = aws_acm_certificate.cert.arn
+  validation_record_fqdns = [ for record in aws_route53_record.cert : record.fqdn ]
 }
 
 resource "kubernetes_namespace" "dummy" {
   metadata {
     name = "dummy"
   }
+  depends_on = [
+    kubectl_manifest.ingress_alb_controller,
+    aws_nat_gateway.nat,
+    aws_route.private_nat_gateway
+  ]
 }
 
 resource "kubernetes_service_v1" "dummy" {
@@ -696,11 +746,11 @@ resource "kubernetes_service_v1" "dummy" {
   }
 }
 
-resource "kubernetes_ingress_v1" "dummy" {
+resource "kubernetes_ingress_v1" "dummy_80" {
   wait_for_load_balancer = true
 
   metadata {
-    name      = "dummy"
+    name      = "dummy-80"
     namespace = kubernetes_namespace.dummy.metadata[0].name
     annotations = {
       "alb.ingress.kubernetes.io/load-balancer-name" = var.alb_name
@@ -708,11 +758,56 @@ resource "kubernetes_ingress_v1" "dummy" {
       "alb.ingress.kubernetes.io/tags"               = join(",", [for key, value in var.cloud_tech_demo_tags : "${key}=${value}"])
       "alb.ingress.kubernetes.io/scheme"             = "internet-facing"
       "alb.ingress.kubernetes.io/subnets"            = local.public_subnet_ids
-      # "alb.ingress.kubernetes.io/security-groups"    = aws_security_group.alb.id
       "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTP\": 80}]"
-      # "alb.ingress.kubernetes.io/certificate-arn"    = ""
+      "alb.ingress.kubernetes.io/ssl-redirect"       = 443
       "alb.ingress.kubernetes.io/target-type"        = "ip"
       "alb.ingress.kubernetes.io/backend-protocol"   = "HTTP"
+      "nginx.ingress.kubernetes.io/rewrite-target"   = "/"
+    }
+  }
+
+  spec {
+    ingress_class_name = "alb"
+    rule {
+      host = "dummy.${var.hosted_zone_name}"
+      http {
+        path {
+          path_type = "ImplementationSpecific"
+          backend {
+            service {
+              name = kubernetes_service_v1.dummy.metadata.0.name
+              port {
+                number = 80
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  depends_on = [
+    kubectl_manifest.ingress_alb_controller
+  ]
+}
+
+resource "kubernetes_ingress_v1" "dummy_443" {
+  wait_for_load_balancer = true
+
+  metadata {
+    name      = "dummy-443"
+    namespace = kubernetes_namespace.dummy.metadata[0].name
+    annotations = {
+      "alb.ingress.kubernetes.io/load-balancer-name" = var.alb_name
+      "alb.ingress.kubernetes.io/group.name"         = "stage.group"
+      "alb.ingress.kubernetes.io/tags"               = join(",", [for key, value in var.cloud_tech_demo_tags : "${key}=${value}"])
+      "alb.ingress.kubernetes.io/scheme"             = "internet-facing"
+      "alb.ingress.kubernetes.io/subnets"            = local.public_subnet_ids
+      "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTPS\": 443}]"
+      "alb.ingress.kubernetes.io/certificate-arn"    = aws_acm_certificate.cert.arn
+      "alb.ingress.kubernetes.io/ssl-redirect"       = 443
+      "alb.ingress.kubernetes.io/target-type"        = "ip"
+      "alb.ingress.kubernetes.io/backend-protocol"   = "HTTPS"
       "nginx.ingress.kubernetes.io/rewrite-target"   = "/"
     }
   }
@@ -750,7 +845,7 @@ resource "aws_route53_record" "cloud_tech_demo_ingress" {
   type    = "A"
 
   alias {
-    name                   = kubernetes_ingress_v1.dummy.status.0.load_balancer.0.ingress.0.hostname
+    name                   = kubernetes_ingress_v1.dummy_80.status.0.load_balancer.0.ingress.0.hostname
     zone_id                = data.aws_elb_hosted_zone_id.main.id
     evaluate_target_health = true
   }

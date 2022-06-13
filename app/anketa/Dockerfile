@@ -11,6 +11,6 @@ RUN npm install
 COPY src src/
 COPY config/server.json config/server.json 
 
-EXPOSE 3000
+EXPOSE 8080
 
 CMD [ "node", "src/index.js" ]

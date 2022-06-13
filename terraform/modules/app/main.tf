@@ -104,13 +104,21 @@ data "aws_ssm_parameter" "cloud_tech_demo_db" {
   name = "/cloud-tech-demo/db/${terraform.workspace}"
 }
 
-resource "kubernetes_deployment_v1" "cloud_tech_demo_db" {
+data "aws_ssm_parameter" "cloud_tech_demo_backend" {
+  name = "/cloud-tech-demo/backend/${terraform.workspace}"
+}
+
+data "aws_ssm_parameter" "cloud_tech_demo_frontend" {
+  name = "/cloud-tech-demo/frontend/${terraform.workspace}"
+}
+
+resource "kubernetes_deployment_v1" "cloud_tech_demo" {
 
   metadata {
-    name      = "cloud-tech-demo-db-${terraform.workspace}-${var.project}"
+    name      = "cloud-tech-demo--${terraform.workspace}-${var.project}"
     namespace = kubernetes_namespace.namespace.metadata[0].name
     labels = {
-      app = "cloud-tech-demo-db-${terraform.workspace}-${var.project}"
+      app = "cloud-tech-demo-${terraform.workspace}-${var.project}"
       service = "irc"
       env = terraform.workspace
     }
@@ -120,7 +128,7 @@ resource "kubernetes_deployment_v1" "cloud_tech_demo_db" {
     replicas = 1
     selector {
       match_labels = {
-        app = "cloud-tech-demo-db-${terraform.workspace}-${var.project}"
+        app = "cloud-tech-demo-${terraform.workspace}-${var.project}"
         service = "irc"
         env = terraform.workspace
       }
@@ -128,7 +136,7 @@ resource "kubernetes_deployment_v1" "cloud_tech_demo_db" {
     template {
       metadata {
         labels = {
-          app = "cloud-tech-demo-db-${terraform.workspace}-${var.project}"
+          app = "cloud-tech-demo-${terraform.workspace}-${var.project}"
           service = "irc"
           env = terraform.workspace
         }
@@ -182,120 +190,36 @@ resource "kubernetes_deployment_v1" "cloud_tech_demo_db" {
           resources {
             limits = {
               cpu    = "0.25"
-              memory = "512Mi"
+              memory = "256Mi"
             }
             requests = {
               cpu    = "0.25"
-              memory = "512Mi"
+              memory = "256Mi"
             }
           }
         }
-      }
-    }
-  }
 
-  depends_on = [
-    kubernetes_namespace.namespace,
-  ]
-}
-
-data "aws_ssm_parameter" "cloud_tech_demo_backend" {
-  name = "/cloud-tech-demo/backend/${terraform.workspace}"
-}
-
-resource "kubernetes_deployment_v1" "cloud_tech_demo_backend" {
-
-  metadata {
-    name      = "cloud-tech-demo-backend-${terraform.workspace}-${var.project}"
-    namespace = kubernetes_namespace.namespace.metadata[0].name
-    labels = {
-      app = "cloud-tech-demo-backend-${terraform.workspace}-${var.project}"
-      service = "irc"
-      env = terraform.workspace
-    }
-  }
-
-  spec {
-    replicas = 1
-    selector {
-      match_labels = {
-        app = "cloud-tech-demo-backend-${terraform.workspace}-${var.project}"
-        service = "irc"
-        env = terraform.workspace
-      }
-    }
-    template {
-      metadata {
-        labels = {
-          app = "cloud-tech-demo-backend-${terraform.workspace}-${var.project}"
-          service = "irc"
-          env = terraform.workspace
-        }
-      }
-      spec {
         container {
           name  = "cloud-tech-demo-backend"
           image = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/${var.ecr_rep}:${data.aws_ssm_parameter.cloud_tech_demo_backend.value}"
 
           port {
-            container_port = 3000
+            container_port = 8080
             protocol       = "TCP"
           }
 
           resources {
             limits = {
               cpu    = "0.25"
-              memory = "512Mi"
+              memory = "256Mi"
             }
             requests = {
               cpu    = "0.25"
-              memory = "512Mi"
+              memory = "256Mi"
             }
           }
         }
-      }
-    }
-  }
 
-  depends_on = [
-    kubernetes_namespace.namespace,
-  ]
-}
-
-data "aws_ssm_parameter" "cloud_tech_demo_frontend" {
-  name = "/cloud-tech-demo/frontend/${terraform.workspace}"
-}
-
-resource "kubernetes_deployment_v1" "cloud_tech_demo_frontend" {
-
-  metadata {
-    name      = "cloud-tech-demo-frontend-${terraform.workspace}-${var.project}"
-    namespace = kubernetes_namespace.namespace.metadata[0].name
-    labels = {
-      app = "cloud-tech-demo-frontend-${terraform.workspace}-${var.project}"
-      service = "irc"
-      env = terraform.workspace
-    }
-  }
-
-  spec {
-    replicas = 1
-    selector {
-      match_labels = {
-        app = "cloud-tech-demo-frontend-${terraform.workspace}-${var.project}"
-        service = "irc"
-        env = terraform.workspace
-      }
-    }
-    template {
-      metadata {
-        labels = {
-          app = "cloud-tech-demo-frontend-${terraform.workspace}-${var.project}"
-          service = "irc"
-          env = terraform.workspace
-        }
-      }
-      spec {
         container {
           name  = "cloud-tech-demo-frontend"
           image = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/${var.ecr_rep}:${data.aws_ssm_parameter.cloud_tech_demo_frontend.value}"
@@ -308,14 +232,15 @@ resource "kubernetes_deployment_v1" "cloud_tech_demo_frontend" {
           resources {
             limits = {
               cpu    = "0.25"
-              memory = "512Mi"
+              memory = "256Mi"
             }
             requests = {
               cpu    = "0.25"
-              memory = "512Mi"
+              memory = "256Mi"
             }
           }
         }
+
       }
     }
   }
@@ -325,12 +250,232 @@ resource "kubernetes_deployment_v1" "cloud_tech_demo_frontend" {
   ]
 }
 
+
+
+
+
+
+# resource "kubernetes_deployment_v1" "cloud_tech_demo_db" {
+
+#   metadata {
+#     name      = "cloud-tech-demo-db-${terraform.workspace}-${var.project}"
+#     namespace = kubernetes_namespace.namespace.metadata[0].name
+#     labels = {
+#       app = "cloud-tech-demo-db-${terraform.workspace}-${var.project}"
+#       service = "irc"
+#       env = terraform.workspace
+#     }
+#   }
+
+#   spec {
+#     replicas = 1
+#     selector {
+#       match_labels = {
+#         app = "cloud-tech-demo-db-${terraform.workspace}-${var.project}"
+#         service = "irc"
+#         env = terraform.workspace
+#       }
+#     }
+#     template {
+#       metadata {
+#         labels = {
+#           app = "cloud-tech-demo-db-${terraform.workspace}-${var.project}"
+#           service = "irc"
+#           env = terraform.workspace
+#         }
+#       }
+#       spec {
+#         container {
+#           name  = "cloud-tech-demo-db"
+#           image = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/${var.ecr_rep}:${data.aws_ssm_parameter.cloud_tech_demo_db.value}"
+#           env {
+#             name  = "MYSQL_ROOT_PASSWORD"
+#             value_from {
+#               secret_key_ref {
+#                 name = "db-creds"
+#                 key  = "mysql_root_password"
+#               }
+#             }
+#           }
+#           env {
+#             name  = "MYSQL_DATABASE"
+#             value_from {
+#               secret_key_ref {
+#                 name = "db-creds"
+#                 key  = "mysql_database"
+#               }
+#             }
+#           }
+#           env {
+#             name  = "MYSQL_USER"
+#             value_from {
+#               secret_key_ref {
+#                 name = "db-creds"
+#                 key  = "mysql_user"
+#               }
+#             }
+#           }
+#           env {
+#             name  = "MYSQL_PASSWORD"
+#             value_from {
+#               secret_key_ref {
+#                 name = "db-creds"
+#                 key  = "mysql_password"
+#               }
+#             }
+#           }
+
+#           port {
+#             container_port = 3306
+#             protocol       = "TCP"
+#           }
+
+#           resources {
+#             limits = {
+#               cpu    = "0.25"
+#               memory = "512Mi"
+#             }
+#             requests = {
+#               cpu    = "0.25"
+#               memory = "512Mi"
+#             }
+#           }
+#         }
+#       }
+#     }
+#   }
+
+#   depends_on = [
+#     kubernetes_namespace.namespace,
+#   ]
+# }
+
+
+
+# resource "kubernetes_deployment_v1" "cloud_tech_demo_backend" {
+
+#   metadata {
+#     name      = "cloud-tech-demo-backend-${terraform.workspace}-${var.project}"
+#     namespace = kubernetes_namespace.namespace.metadata[0].name
+#     labels = {
+#       app = "cloud-tech-demo-backend-${terraform.workspace}-${var.project}"
+#       service = "irc"
+#       env = terraform.workspace
+#     }
+#   }
+
+#   spec {
+#     replicas = 1
+#     selector {
+#       match_labels = {
+#         app = "cloud-tech-demo-backend-${terraform.workspace}-${var.project}"
+#         service = "irc"
+#         env = terraform.workspace
+#       }
+#     }
+#     template {
+#       metadata {
+#         labels = {
+#           app = "cloud-tech-demo-backend-${terraform.workspace}-${var.project}"
+#           service = "irc"
+#           env = terraform.workspace
+#         }
+#       }
+#       spec {
+#         container {
+#           name  = "cloud-tech-demo-backend"
+#           image = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/${var.ecr_rep}:${data.aws_ssm_parameter.cloud_tech_demo_backend.value}"
+
+#           port {
+#             container_port = 3000
+#             protocol       = "TCP"
+#           }
+
+#           resources {
+#             limits = {
+#               cpu    = "0.25"
+#               memory = "512Mi"
+#             }
+#             requests = {
+#               cpu    = "0.25"
+#               memory = "512Mi"
+#             }
+#           }
+#         }
+#       }
+#     }
+#   }
+
+#   depends_on = [
+#     kubernetes_namespace.namespace,
+#   ]
+# }
+
+# resource "kubernetes_deployment_v1" "cloud_tech_demo_frontend" {
+
+#   metadata {
+#     name      = "cloud-tech-demo-frontend-${terraform.workspace}-${var.project}"
+#     namespace = kubernetes_namespace.namespace.metadata[0].name
+#     labels = {
+#       app = "cloud-tech-demo-frontend-${terraform.workspace}-${var.project}"
+#       service = "irc"
+#       env = terraform.workspace
+#     }
+#   }
+
+#   spec {
+#     replicas = 1
+#     selector {
+#       match_labels = {
+#         app = "cloud-tech-demo-frontend-${terraform.workspace}-${var.project}"
+#         service = "irc"
+#         env = terraform.workspace
+#       }
+#     }
+#     template {
+#       metadata {
+#         labels = {
+#           app = "cloud-tech-demo-frontend-${terraform.workspace}-${var.project}"
+#           service = "irc"
+#           env = terraform.workspace
+#         }
+#       }
+#       spec {
+#         container {
+#           name  = "cloud-tech-demo-frontend"
+#           image = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/${var.ecr_rep}:${data.aws_ssm_parameter.cloud_tech_demo_frontend.value}"
+
+#           port {
+#             container_port = 3000
+#             protocol       = "TCP"
+#           }
+
+#           resources {
+#             limits = {
+#               cpu    = "0.25"
+#               memory = "512Mi"
+#             }
+#             requests = {
+#               cpu    = "0.25"
+#               memory = "512Mi"
+#             }
+#           }
+#         }
+#       }
+#     }
+#   }
+
+#   depends_on = [
+#     kubernetes_namespace.namespace,
+#   ]
+# }
+
 resource "kubernetes_service_v1" "db" {
   metadata {
     name      = "db-${terraform.workspace}-${var.project}"
     namespace = kubernetes_namespace.namespace.metadata[0].name
     labels = {
-      app = "cloud-tech-demo-db-${terraform.workspace}-${var.project}"
+      app = "cloud-tech-demo-${terraform.workspace}-${var.project}"
       service = "irc"
       env = terraform.workspace
     }
@@ -338,7 +483,7 @@ resource "kubernetes_service_v1" "db" {
 
   spec {
     selector = {
-      app     = "cloud-tech-demo-db-${terraform.workspace}-${var.project}"
+      app     = "cloud-tech-demo-${terraform.workspace}-${var.project}"
       service = "irc"
       env     = terraform.workspace
     }
@@ -357,7 +502,7 @@ resource "kubernetes_service_v1" "backend" {
     name      = "backend-${terraform.workspace}-${var.project}"
     namespace = kubernetes_namespace.namespace.metadata[0].name
     labels = {
-      app = "cloud-tech-demo-backend-${terraform.workspace}-${var.project}"
+      app = "cloud-tech-demo-${terraform.workspace}-${var.project}"
       service = "irc"
       env = terraform.workspace
     }
@@ -365,21 +510,15 @@ resource "kubernetes_service_v1" "backend" {
 
   spec {
     selector = {
-      app     = "cloud-tech-demo-backend-${terraform.workspace}-${var.project}"
+      app     = "cloud-tech-demo-${terraform.workspace}-${var.project}"
       service = "irc"
       env     = terraform.workspace
     }
     port {
-      name        = "backend-80"
+      name        = "backend-8080"
       protocol    = "TCP"
-      port        = 80
-      target_port = 3000
-    }
-    port {
-      name        = "backend-443"
-      protocol    = "TCP"
-      port        = 443
-      target_port = 3000
+      port        = 8080
+      target_port = 8080
     }
     type = "NodePort"
   }
@@ -390,7 +529,7 @@ resource "kubernetes_service_v1" "frontend" {
     name      = "frontend-${terraform.workspace}-${var.project}"
     namespace = kubernetes_namespace.namespace.metadata[0].name
     labels = {
-      app = "cloud-tech-demo-frontend-${terraform.workspace}-${var.project}"
+      app = "cloud-tech-demo-${terraform.workspace}-${var.project}"
       service = "irc"
       env = terraform.workspace
     }
@@ -398,7 +537,7 @@ resource "kubernetes_service_v1" "frontend" {
 
   spec {
     selector = {
-      app     = "cloud-tech-demo-frontend-${terraform.workspace}-${var.project}"
+      app     = "cloud-tech-demo-${terraform.workspace}-${var.project}"
       service = "irc"
       env     = terraform.workspace
     }
@@ -418,11 +557,52 @@ resource "kubernetes_service_v1" "frontend" {
   }
 }
 
-resource "kubernetes_ingress_v1" "backend_80" {
+# resource "kubernetes_ingress_v1" "backend_8080" {
+#   wait_for_load_balancer = true
+
+#   metadata {
+#     name      = "backend-${terraform.workspace}-${var.project}-port-8080"
+#     namespace = kubernetes_namespace.namespace.metadata[0].name
+#     annotations = {
+#       "alb.ingress.kubernetes.io/load-balancer-name" = var.alb_name
+#       "alb.ingress.kubernetes.io/group.name"         = "stage.group"
+#       "alb.ingress.kubernetes.io/tags"               = join(",", [for key, value in var.cloud_tech_demo_tags : "${key}=${value}"])
+#       "alb.ingress.kubernetes.io/scheme"             = "internet-facing"
+#       "alb.ingress.kubernetes.io/subnets"            = local.public_subnet_ids
+#       "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTP\": 8080}]"
+#       "alb.ingress.kubernetes.io/ssl-redirect"       = 443
+#       "alb.ingress.kubernetes.io/target-type"        = "ip"
+#       "alb.ingress.kubernetes.io/backend-protocol"   = "HTTP"
+#       "nginx.ingress.kubernetes.io/rewrite-target"   = "/"
+#     }
+#   }
+
+#   spec {
+#     ingress_class_name = "alb"
+#     rule {
+#       host = "backend.${kubernetes_namespace.namespace.metadata[0].name}.${var.hosted_zone_name}"
+#       http {
+#         path {
+#           path_type = "ImplementationSpecific"
+#           backend {
+#             service {
+#               name = kubernetes_service_v1.backend.metadata.0.name
+#               port {
+#                 number = 8080
+#               }
+#             }
+#           }
+#         }
+#       }
+#     }
+#   }
+# }
+
+resource "kubernetes_ingress_v1" "backend_8080" {
   wait_for_load_balancer = true
 
   metadata {
-    name      = "backend-${terraform.workspace}-${var.project}-port-80"
+    name      = "backend-${terraform.workspace}-${var.project}-port-8080"
     namespace = kubernetes_namespace.namespace.metadata[0].name
     annotations = {
       "alb.ingress.kubernetes.io/load-balancer-name" = var.alb_name
@@ -430,50 +610,9 @@ resource "kubernetes_ingress_v1" "backend_80" {
       "alb.ingress.kubernetes.io/tags"               = join(",", [for key, value in var.cloud_tech_demo_tags : "${key}=${value}"])
       "alb.ingress.kubernetes.io/scheme"             = "internet-facing"
       "alb.ingress.kubernetes.io/subnets"            = local.public_subnet_ids
-      "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTP\": 80}]"
-      "alb.ingress.kubernetes.io/ssl-redirect"       = 443
-      "alb.ingress.kubernetes.io/target-type"        = "ip"
-      "alb.ingress.kubernetes.io/backend-protocol"   = "HTTP"
-      "nginx.ingress.kubernetes.io/rewrite-target"   = "/"
-    }
-  }
-
-  spec {
-    ingress_class_name = "alb"
-    rule {
-      host = "backend.${kubernetes_namespace.namespace.metadata[0].name}.${var.hosted_zone_name}"
-      http {
-        path {
-          path_type = "ImplementationSpecific"
-          backend {
-            service {
-              name = kubernetes_service_v1.backend.metadata.0.name
-              port {
-                number = 80
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-resource "kubernetes_ingress_v1" "backend_443" {
-  wait_for_load_balancer = true
-
-  metadata {
-    name      = "backend-${terraform.workspace}-${var.project}-port-443"
-    namespace = kubernetes_namespace.namespace.metadata[0].name
-    annotations = {
-      "alb.ingress.kubernetes.io/load-balancer-name" = var.alb_name
-      "alb.ingress.kubernetes.io/group.name"         = "stage.group"
-      "alb.ingress.kubernetes.io/tags"               = join(",", [for key, value in var.cloud_tech_demo_tags : "${key}=${value}"])
-      "alb.ingress.kubernetes.io/scheme"             = "internet-facing"
-      "alb.ingress.kubernetes.io/subnets"            = local.public_subnet_ids
-      "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTPS\": 443}]"
+      "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTPS\": 8080}]"
       "alb.ingress.kubernetes.io/certificate-arn"    = aws_acm_certificate.cert.arn
-      "alb.ingress.kubernetes.io/ssl-redirect"       = 443
+      "alb.ingress.kubernetes.io/ssl-redirect"       = 8080
       "alb.ingress.kubernetes.io/target-type"        = "ip"
       "alb.ingress.kubernetes.io/backend-protocol"   = "HTTP"
       "nginx.ingress.kubernetes.io/rewrite-target"   = "/"
@@ -491,7 +630,7 @@ resource "kubernetes_ingress_v1" "backend_443" {
             service {
               name = kubernetes_service_v1.backend.metadata.0.name
               port {
-                number = 443
+                number = 8080
               }
             }
           }

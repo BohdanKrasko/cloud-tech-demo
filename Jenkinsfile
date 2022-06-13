@@ -9,7 +9,7 @@ pipeline {
 
     parameters {
         choice (
-            choices: ['deploy', 'build', 'destroy'],
+            choices: ['deploy', 'build', 'destroy', 'infra-create', 'infra-destroy'],
             description: '',
             name: 'action'
         )
@@ -116,7 +116,7 @@ pipeline {
             }
             steps {
                 dir ('app/anketa/frontend') {
-                    sh "docker build -t ${REPO_URI}:${REPO_NAME}-${params.env}-frontend-${VERSION} . --build-arg REACT_APP_HOST=https://backend.${params.env}.cloud-tech-demo.pp.ua"
+                    sh "docker build -t ${REPO_URI}:${REPO_NAME}-${params.env}-frontend-${VERSION} . --build-arg REACT_APP_HOST=https://backend.${params.env}.cloud-tech-demo.pp.ua:8080"
                     sh "docker push ${REPO_URI}:${REPO_NAME}-${params.env}-frontend-${VERSION}"
                     sh "docker rmi ${REPO_URI}:${REPO_NAME}-${params.env}-frontend-${VERSION}"
                 }
@@ -128,19 +128,25 @@ pipeline {
 
         stage('Terraform init and select workspace') {
             when {
-              expression { params.action == 'deploy' || params.action == 'destroy'}
+              expression { params.action == 'deploy' || params.action == 'destroy' || params.action == 'infra-destroy' || params.action == 'infra-create'}
             }
             steps {
-                dir('terraform') {
-                    withAWS(credentials:'cloud-tech', region:'us-east-1') {
-                        sh 'terraform init'
-                        sh "terraform workspace select ${params.env}"
+                script {
+                    dir('terraform') {
+                        withAWS(credentials:'cloud-tech', region:'us-east-1') {
+                            sh 'terraform init'
+                            if (params.action == 'infra-destroy' || params.action == 'infra-create') {
+                                sh "terraform workspace select default"
+                            } else {
+                                sh "terraform workspace select ${params.env}"
+                            }
+                        }
                     }
                 }
             }
         }
 
-        stage('Deploy infra') {
+        stage('Deploy app') {
             when {
               expression { params.action == 'deploy'}
             }
@@ -154,7 +160,7 @@ pipeline {
             }
         }
 
-        stage('Destroy infra') {
+        stage('Stop app') {
             when {
                 expression { params.action == 'destroy'}
             }
@@ -162,6 +168,33 @@ pipeline {
                 dir('terraform') {
                     withAWS(credentials:'cloud-tech', region:'us-east-1') {
                         sh 'terraform destroy -auto-approve'
+                    }
+                }
+            }
+        }
+
+        stage('Deploy infrastracture') {
+            when {
+              expression { params.action == 'infra-create'}
+            }
+            steps {
+                dir('terraform') {
+                    withAWS(credentials:'cloud-tech', region:'us-east-1') {
+                        sh 'terraform plan'
+                        sh 'terraform apply -target=module.eks -auto-approve'
+                    }
+                }
+            }
+        }
+
+        stage('Destroy infrastracture') {
+            when {
+                expression { params.action == 'infra-destroy'}
+            }
+            steps {
+                dir('terraform') {
+                    withAWS(credentials:'cloud-tech', region:'us-east-1') {
+                        sh 'terraform destroy -target=module.eks -auto-approve'
                     }
                 }
             }
