@@ -220,26 +220,26 @@ resource "kubernetes_deployment_v1" "cloud_tech_demo" {
           }
         }
 
-        # container {
-        #   name  = "cloud-tech-demo-frontend"
-        #   image = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/${var.ecr_rep}:${data.aws_ssm_parameter.cloud_tech_demo_frontend.value}"
+        container {
+          name  = "cloud-tech-demo-frontend"
+          image = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/${var.ecr_rep}:${data.aws_ssm_parameter.cloud_tech_demo_frontend.value}"
 
-        #   port {
-        #     container_port = 3000
-        #     protocol       = "TCP"
-        #   }
+          port {
+            container_port = 3000
+            protocol       = "TCP"
+          }
 
-        #   resources {
-        #     limits = {
-        #       cpu    = "0.25"
-        #       memory = "256Mi"
-        #     }
-        #     requests = {
-        #       cpu    = "0.25"
-        #       memory = "256Mi"
-        #     }
-        #   }
-        # }
+          resources {
+            limits = {
+              cpu    = "0.25"
+              memory = "256Mi"
+            }
+            requests = {
+              cpu    = "0.25"
+              memory = "256Mi"
+            }
+          }
+        }
 
       }
     }
@@ -524,38 +524,38 @@ resource "kubernetes_service_v1" "backend" {
   }
 }
 
-# resource "kubernetes_service_v1" "frontend" {
-#   metadata {
-#     name      = "frontend-${terraform.workspace}-${var.project}"
-#     namespace = kubernetes_namespace.namespace.metadata[0].name
-#     labels = {
-#       app = "cloud-tech-demo-${terraform.workspace}-${var.project}"
-#       service = "irc"
-#       env = terraform.workspace
-#     }
-#   }
+resource "kubernetes_service_v1" "frontend" {
+  metadata {
+    name      = "frontend-${terraform.workspace}-${var.project}"
+    namespace = kubernetes_namespace.namespace.metadata[0].name
+    labels = {
+      app = "cloud-tech-demo-${terraform.workspace}-${var.project}"
+      service = "irc"
+      env = terraform.workspace
+    }
+  }
 
-#   spec {
-#     selector = {
-#       app     = "cloud-tech-demo-${terraform.workspace}-${var.project}"
-#       service = "irc"
-#       env     = terraform.workspace
-#     }
-#     port {
-#       name        = "frontend-80"
-#       protocol    = "TCP"
-#       port        = 80
-#       target_port = 3000
-#     }
-#     port {
-#       name        = "frontend-443"
-#       protocol    = "TCP"
-#       port        = 443
-#       target_port = 3000
-#     }
-#     type = "NodePort"
-#   }
-# }
+  spec {
+    selector = {
+      app     = "cloud-tech-demo-${terraform.workspace}-${var.project}"
+      service = "irc"
+      env     = terraform.workspace
+    }
+    port {
+      name        = "frontend-80"
+      protocol    = "TCP"
+      port        = 80
+      target_port = 3000
+    }
+    port {
+      name        = "frontend-443"
+      protocol    = "TCP"
+      port        = 443
+      target_port = 3000
+    }
+    type = "NodePort"
+  }
+}
 
 # resource "kubernetes_ingress_v1" "backend_8080" {
 #   wait_for_load_balancer = true
@@ -640,88 +640,88 @@ resource "kubernetes_ingress_v1" "backend_8080" {
   }
 }
 
-# resource "kubernetes_ingress_v1" "frontend_80" {
-#   wait_for_load_balancer = true
+resource "kubernetes_ingress_v1" "frontend_80" {
+  wait_for_load_balancer = true
 
-#   metadata {
-#     name      = "frontend-${terraform.workspace}-${var.project}-port-80"
-#     namespace = kubernetes_namespace.namespace.metadata[0].name
-#     annotations = {
-#       "alb.ingress.kubernetes.io/load-balancer-name" = var.alb_name
-#       "alb.ingress.kubernetes.io/group.name"         = "stage.group"
-#       "alb.ingress.kubernetes.io/tags"               = join(",", [for key, value in var.cloud_tech_demo_tags : "${key}=${value}"])
-#       "alb.ingress.kubernetes.io/scheme"             = "internet-facing"
-#       "alb.ingress.kubernetes.io/subnets"            = local.public_subnet_ids
-#       "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTP\": 80}]"
-#       "alb.ingress.kubernetes.io/ssl-redirect"       = 443
-#       "alb.ingress.kubernetes.io/target-type"        = "ip"
-#       "alb.ingress.kubernetes.io/backend-protocol"   = "HTTP"
-#       "nginx.ingress.kubernetes.io/rewrite-target"   = "/"
-#     }
-#   }
+  metadata {
+    name      = "frontend-${terraform.workspace}-${var.project}-port-80"
+    namespace = kubernetes_namespace.namespace.metadata[0].name
+    annotations = {
+      "alb.ingress.kubernetes.io/load-balancer-name" = var.alb_name
+      "alb.ingress.kubernetes.io/group.name"         = "stage.group"
+      "alb.ingress.kubernetes.io/tags"               = join(",", [for key, value in var.cloud_tech_demo_tags : "${key}=${value}"])
+      "alb.ingress.kubernetes.io/scheme"             = "internet-facing"
+      "alb.ingress.kubernetes.io/subnets"            = local.public_subnet_ids
+      "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTP\": 80}]"
+      "alb.ingress.kubernetes.io/ssl-redirect"       = 443
+      "alb.ingress.kubernetes.io/target-type"        = "ip"
+      "alb.ingress.kubernetes.io/backend-protocol"   = "HTTP"
+      "nginx.ingress.kubernetes.io/rewrite-target"   = "/"
+    }
+  }
 
-#   spec {
-#     ingress_class_name = "alb"
-#     rule {
-#       host = "irc.${kubernetes_namespace.namespace.metadata[0].name}.${var.hosted_zone_name}"
-#       http {
-#         path {
-#           path_type = "ImplementationSpecific"
-#           backend {
-#             service {
-#               name = kubernetes_service_v1.frontend.metadata.0.name
-#               port {
-#                 number = 80
-#               }
-#             }
-#           }
-#         }
-#       }
-#     }
-#   }
-# }
+  spec {
+    ingress_class_name = "alb"
+    rule {
+      host = "irc.${kubernetes_namespace.namespace.metadata[0].name}.${var.hosted_zone_name}"
+      http {
+        path {
+          path_type = "ImplementationSpecific"
+          backend {
+            service {
+              name = kubernetes_service_v1.frontend.metadata.0.name
+              port {
+                number = 80
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
 
-# resource "kubernetes_ingress_v1" "frontend_443" {
-#   wait_for_load_balancer = true
+resource "kubernetes_ingress_v1" "frontend_443" {
+  wait_for_load_balancer = true
 
-#   metadata {
-#     name      = "frontend-${terraform.workspace}-${var.project}-port-443"
-#     namespace = kubernetes_namespace.namespace.metadata[0].name
-#     annotations = {
-#       "alb.ingress.kubernetes.io/load-balancer-name" = var.alb_name
-#       "alb.ingress.kubernetes.io/group.name"         = "stage.group"
-#       "alb.ingress.kubernetes.io/tags"               = join(",", [for key, value in var.cloud_tech_demo_tags : "${key}=${value}"])
-#       "alb.ingress.kubernetes.io/scheme"             = "internet-facing"
-#       "alb.ingress.kubernetes.io/subnets"            = local.public_subnet_ids
-#       "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTPS\": 443}]"
-#       "alb.ingress.kubernetes.io/certificate-arn"    = aws_acm_certificate.cert.arn
-#       "alb.ingress.kubernetes.io/ssl-redirect"       = 443
-#       "alb.ingress.kubernetes.io/target-type"        = "ip"
-#       "alb.ingress.kubernetes.io/backend-protocol"   = "HTTP"
-#       "nginx.ingress.kubernetes.io/rewrite-target"   = "/"
-#     }
-#   }
+  metadata {
+    name      = "frontend-${terraform.workspace}-${var.project}-port-443"
+    namespace = kubernetes_namespace.namespace.metadata[0].name
+    annotations = {
+      "alb.ingress.kubernetes.io/load-balancer-name" = var.alb_name
+      "alb.ingress.kubernetes.io/group.name"         = "stage.group"
+      "alb.ingress.kubernetes.io/tags"               = join(",", [for key, value in var.cloud_tech_demo_tags : "${key}=${value}"])
+      "alb.ingress.kubernetes.io/scheme"             = "internet-facing"
+      "alb.ingress.kubernetes.io/subnets"            = local.public_subnet_ids
+      "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTPS\": 443}]"
+      "alb.ingress.kubernetes.io/certificate-arn"    = aws_acm_certificate.cert.arn
+      "alb.ingress.kubernetes.io/ssl-redirect"       = 443
+      "alb.ingress.kubernetes.io/target-type"        = "ip"
+      "alb.ingress.kubernetes.io/backend-protocol"   = "HTTP"
+      "nginx.ingress.kubernetes.io/rewrite-target"   = "/"
+    }
+  }
 
-#   spec {
-#     ingress_class_name = "alb"
-#     rule {
-#       host = "irc.${kubernetes_namespace.namespace.metadata[0].name}.${var.hosted_zone_name}"
-#       http {
-#         path {
-#           path_type = "ImplementationSpecific"
-#           backend {
-#             service {
-#               name = kubernetes_service_v1.frontend.metadata.0.name
-#               port {
-#                 number = 443
-#               }
-#             }
-#           }
-#         }
-#       }
-#     }
-#   }
-# }
+  spec {
+    ingress_class_name = "alb"
+    rule {
+      host = "irc.${kubernetes_namespace.namespace.metadata[0].name}.${var.hosted_zone_name}"
+      http {
+        path {
+          path_type = "ImplementationSpecific"
+          backend {
+            service {
+              name = kubernetes_service_v1.frontend.metadata.0.name
+              port {
+                number = 443
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
 
 resource "aws_route53_record" "backend" {
   allow_overwrite = true
