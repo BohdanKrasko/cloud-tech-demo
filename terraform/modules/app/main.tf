@@ -190,11 +190,11 @@ resource "kubernetes_deployment_v1" "cloud_tech_demo" {
           resources {
             limits = {
               cpu    = "0.25"
-              memory = "256Mi"
+              memory = "512Mi"
             }
             requests = {
               cpu    = "0.25"
-              memory = "256Mi"
+              memory = "512Mi"
             }
           }
         }
