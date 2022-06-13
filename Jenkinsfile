@@ -116,7 +116,7 @@ pipeline {
             }
             steps {
                 dir ('app/anketa/frontend') {
-                    sh "docker build -t ${REPO_URI}:${REPO_NAME}-${params.env}-frontend-${VERSION} . --build-arg REACT_APP_HOST=https://backend.${params.env}.cloud-tech-demo.pp.ua:8080"
+                    sh "docker build -t ${REPO_URI}:${REPO_NAME}-${params.env}-frontend-${VERSION} . --build-arg REACT_APP_HOST=https://backend.${params.env}.cloud-tech-demo.pp.ua"
                     sh "docker push ${REPO_URI}:${REPO_NAME}-${params.env}-frontend-${VERSION}"
                     sh "docker rmi ${REPO_URI}:${REPO_NAME}-${params.env}-frontend-${VERSION}"
                 }
