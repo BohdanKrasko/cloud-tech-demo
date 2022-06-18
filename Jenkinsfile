@@ -135,7 +135,6 @@ pipeline {
                         withAWS(credentials:'cloud-tech', region:'us-east-1') {
                             sh 'terraform init'
                                 sh "terraform workspace select ${params.env}"
-                            }
                         }
                     }
                 }
