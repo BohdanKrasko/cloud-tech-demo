@@ -172,6 +172,8 @@ resource "aws_eks_cluster" "cloud_tech_demo" {
   depends_on = [
     aws_iam_role_policy_attachment.cloud_tech_demo_AmazonEKSClusterPolicy,
     aws_iam_role_policy_attachment.cloud_tech_demo_AmazonEKSVPCResourceController,
+    aws_nat_gateway.nat,
+    aws_internet_gateway.gw
   ]
 }
 
