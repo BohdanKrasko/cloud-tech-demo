@@ -35,12 +35,24 @@ pipeline {
     }
 
     stages {
+        stage('Check branch and env') {
+            steps {
+                script {
+                    if (BRANCH_NAME != 'main' && params.env == 'prod') {
+                        currentBuild.result = 'ABORTED'
+                        error('Stopping job as prod env allowed only on the main branch')
+                    }
+                }
+            }
+        }
+        
         stage('Prepare tags for App') {
             when {
               expression { params.action == 'build'}
             }
             steps {
                 script {
+                    if (BRANCH_NAME != 'main' && params.env == )
                     // Set the image version based on tag number
                     GitTagNumber = sh(returnStdout: true, script: 'git describe --tags --always').trim()
                     shortGitTagNumber = GitTagNumber.take(20)
@@ -134,7 +146,7 @@ pipeline {
                     dir('terraform') {
                         withAWS(credentials:'cloud-tech', region:'us-east-1') {
                             sh 'terraform init'
-                                sh "terraform workspace select ${params.env}"
+                            sh "terraform workspace select ${params.env}"
                         }
                     }
                 }
