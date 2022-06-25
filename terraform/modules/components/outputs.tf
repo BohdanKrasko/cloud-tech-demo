@@ -1,5 +1,5 @@
 output "kms_key_arn" {
-  value =  aws_kms_key.cloud_tech_demo.arn
+  value = aws_kms_key.cloud_tech_demo.arn
 }
 
 output "cloud_tech_demo_hosted_zone_id" {

@@ -1,5 +1,5 @@
 locals {
-  public_subnet_ids         = join(",", [ for s in data.aws_subnet.cloud_tech_demo : s.id ]) 
+  public_subnet_ids = join(",", [for s in data.aws_subnet.cloud_tech_demo : s.id])
 }
 
 data "aws_vpc" "cloud_tech_demo" {
@@ -11,7 +11,7 @@ data "aws_vpc" "cloud_tech_demo" {
 data "aws_subnets" "cloud_tech_demo" {
   filter {
     name   = "vpc-id"
-    values = [ data.aws_vpc.cloud_tech_demo.id ]
+    values = [data.aws_vpc.cloud_tech_demo.id]
   }
   tags = {
     Tier = "Public"
@@ -35,7 +35,7 @@ data "aws_eks_cluster_auth" "cloud_tech_demo" {
 resource "aws_acm_certificate" "cert" {
   domain_name               = "irc.${kubernetes_namespace.namespace.metadata[0].name}.${var.hosted_zone_name}"
   validation_method         = "DNS"
-  subject_alternative_names = [ "backend.${kubernetes_namespace.namespace.metadata[0].name}.${var.hosted_zone_name}" ]
+  subject_alternative_names = ["backend.${kubernetes_namespace.namespace.metadata[0].name}.${var.hosted_zone_name}"]
 
   lifecycle {
     create_before_destroy = true
@@ -60,7 +60,7 @@ resource "aws_route53_record" "cert" {
 
   allow_overwrite = true
   name            = each.value.name
-  records         = [ each.value.record ]
+  records         = [each.value.record]
   ttl             = 60
   type            = each.value.type
   zone_id         = data.aws_route53_zone.cloud_tech_demo.zone_id
@@ -68,7 +68,7 @@ resource "aws_route53_record" "cert" {
 
 resource "aws_acm_certificate_validation" "cert" {
   certificate_arn         = aws_acm_certificate.cert.arn
-  validation_record_fqdns = [ for record in aws_route53_record.cert : record.fqdn ]
+  validation_record_fqdns = [for record in aws_route53_record.cert : record.fqdn]
 }
 
 # NAMESPACES
@@ -86,9 +86,9 @@ resource "kubernetes_secret" "db_creds" {
 
   data = {
     mysql_root_password = "root"
-    mysql_database = "anketa"
-    mysql_user = "user"
-    mysql_password = "user"
+    mysql_database      = "anketa"
+    mysql_user          = "user"
+    mysql_password      = "user"
   }
 
   type = "Opaque"
@@ -118,9 +118,9 @@ resource "kubernetes_deployment_v1" "cloud_tech_demo" {
     name      = "cloud-tech-demo--${terraform.workspace}-${var.project}"
     namespace = kubernetes_namespace.namespace.metadata[0].name
     labels = {
-      app = "cloud-tech-demo-${terraform.workspace}-${var.project}"
+      app     = "cloud-tech-demo-${terraform.workspace}-${var.project}"
       service = "irc"
-      env = terraform.workspace
+      env     = terraform.workspace
     }
   }
 
@@ -128,17 +128,17 @@ resource "kubernetes_deployment_v1" "cloud_tech_demo" {
     replicas = 1
     selector {
       match_labels = {
-        app = "cloud-tech-demo-${terraform.workspace}-${var.project}"
+        app     = "cloud-tech-demo-${terraform.workspace}-${var.project}"
         service = "irc"
-        env = terraform.workspace
+        env     = terraform.workspace
       }
     }
     template {
       metadata {
         labels = {
-          app = "cloud-tech-demo-${terraform.workspace}-${var.project}"
+          app     = "cloud-tech-demo-${terraform.workspace}-${var.project}"
           service = "irc"
-          env = terraform.workspace
+          env     = terraform.workspace
         }
       }
       spec {
@@ -146,7 +146,7 @@ resource "kubernetes_deployment_v1" "cloud_tech_demo" {
           name  = "cloud-tech-demo-db"
           image = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/${var.ecr_rep}:${data.aws_ssm_parameter.cloud_tech_demo_db.value}"
           env {
-            name  = "MYSQL_ROOT_PASSWORD"
+            name = "MYSQL_ROOT_PASSWORD"
             value_from {
               secret_key_ref {
                 name = "db-creds"
@@ -155,7 +155,7 @@ resource "kubernetes_deployment_v1" "cloud_tech_demo" {
             }
           }
           env {
-            name  = "MYSQL_DATABASE"
+            name = "MYSQL_DATABASE"
             value_from {
               secret_key_ref {
                 name = "db-creds"
@@ -164,7 +164,7 @@ resource "kubernetes_deployment_v1" "cloud_tech_demo" {
             }
           }
           env {
-            name  = "MYSQL_USER"
+            name = "MYSQL_USER"
             value_from {
               secret_key_ref {
                 name = "db-creds"
@@ -173,7 +173,7 @@ resource "kubernetes_deployment_v1" "cloud_tech_demo" {
             }
           }
           env {
-            name  = "MYSQL_PASSWORD"
+            name = "MYSQL_PASSWORD"
             value_from {
               secret_key_ref {
                 name = "db-creds"
@@ -255,9 +255,9 @@ resource "kubernetes_service_v1" "db" {
     name      = "db-${terraform.workspace}-${var.project}"
     namespace = kubernetes_namespace.namespace.metadata[0].name
     labels = {
-      app = "cloud-tech-demo-${terraform.workspace}-${var.project}"
+      app     = "cloud-tech-demo-${terraform.workspace}-${var.project}"
       service = "irc"
-      env = terraform.workspace
+      env     = terraform.workspace
     }
   }
 
@@ -282,9 +282,9 @@ resource "kubernetes_service_v1" "backend" {
     name      = "backend-${terraform.workspace}-${var.project}"
     namespace = kubernetes_namespace.namespace.metadata[0].name
     labels = {
-      app = "cloud-tech-demo-${terraform.workspace}-${var.project}"
+      app     = "cloud-tech-demo-${terraform.workspace}-${var.project}"
       service = "irc"
-      env = terraform.workspace
+      env     = terraform.workspace
     }
   }
 
@@ -315,9 +315,9 @@ resource "kubernetes_service_v1" "frontend" {
     name      = "frontend-${terraform.workspace}-${var.project}"
     namespace = kubernetes_namespace.namespace.metadata[0].name
     labels = {
-      app = "cloud-tech-demo-${terraform.workspace}-${var.project}"
+      app     = "cloud-tech-demo-${terraform.workspace}-${var.project}"
       service = "irc"
-      env = terraform.workspace
+      env     = terraform.workspace
     }
   }
 
@@ -526,7 +526,3 @@ resource "aws_route53_record" "frontend" {
   type            = "CNAME"
   zone_id         = data.aws_route53_zone.cloud_tech_demo.zone_id
 }
-
-
-
-

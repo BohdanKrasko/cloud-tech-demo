@@ -1,6 +1,6 @@
 # Route 53
 resource "aws_route53_zone" "cloud_tech" {
-  name     = var.hosted_zone_name
+  name = var.hosted_zone_name
 
   tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = var.hosted_zone_name }))
 }
