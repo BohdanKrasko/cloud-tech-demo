@@ -10,4 +10,4 @@ kubectl apply -f prometheus.yaml -n prometheus
 
 # Dasboad ID 6663
 # Grafana URL: grafana.cloud-tech-demo.pp.ua
-# Prometheus URL: prometheus.cloud-tech-demo.pp.ua
+# Prometheus URL: https://prometheus.cloud-tech-demo.pp.ua

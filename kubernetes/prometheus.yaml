@@ -25,7 +25,7 @@ metadata:
     alb.ingress.kubernetes.io/group.name: "stage.group"
     alb.ingress.kubernetes.io/scheme: "internet-facing"
     alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/subnets: subnet-0503031fe1f1760d3,subnet-0a99b60981562602a
+    alb.ingress.kubernetes.io/subnets: subnet-0e55b60b5320fea5e,subnet-05c8f769882bc713c
   namespace: prometheus
 spec:
   rules:
@@ -50,7 +50,7 @@ metadata:
     alb.ingress.kubernetes.io/group.name: "stage.group"
     alb.ingress.kubernetes.io/scheme: "internet-facing"
     alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/subnets: subnet-0503031fe1f1760d3,subnet-0a99b60981562602a
+    alb.ingress.kubernetes.io/subnets: subnet-0e55b60b5320fea5e,subnet-05c8f769882bc713c
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS": 443}]'
     alb.ingress.kubernetes.io/backend-protocol: "HTTP"
     alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:196123732812:certificate/363e5123-9a95-4a5b-b500-8421180b84e6
