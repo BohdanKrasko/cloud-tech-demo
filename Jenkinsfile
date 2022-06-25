@@ -35,6 +35,17 @@ pipeline {
     }
 
     stages {
+        stage('Check branch and env') {
+            steps {
+                script {
+                    if (env.BRANCH_NAME != 'main' && params.env == 'prod') {
+                        currentBuild.result = 'ABORTED'
+                        error('Stopping job as prod env allowed only on the main branch')
+                    }
+                }
+            }
+        }
+
         stage('Prepare tags for App') {
             when {
               expression { params.action == 'build'}
@@ -134,7 +145,7 @@ pipeline {
                     dir('terraform') {
                         withAWS(credentials:'cloud-tech', region:'us-east-1') {
                             sh 'terraform init'
-                                sh "terraform workspace select ${params.env}"
+                            sh "terraform workspace select ${params.env}"
                         }
                     }
                 }
