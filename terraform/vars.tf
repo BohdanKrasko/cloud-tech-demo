@@ -1,49 +1,53 @@
 variable "cloud_tech_demo_tags" {
+  description = "Default cloud-tech-demo tags"
   default = {
-    Application    = "cloud-tech-demo"
-    Owner = "krasko"
+    Application = "cloud-tech-demo"
+    Owner       = "krasko"
     Environment = "test"
   }
-  description = "Default C tags"
 }
 
 variable "shared_credentials_file" {
-  default     = "~/.aws/credentials"
   description = "The shared credential file for AWS"
+  default     = "~/.aws/credentials"
 }
 
 variable "aws_worker_profile" {
-  default     = "cloud-tech"
   description = "The AWS default worker profile"
+  default     = "cloud-tech"
 }
 
 variable "region" {
-  default     = "us-east-1"
   description = "The AWS regions used for our environment"
+  default     = "us-east-1"
 }
 
 variable "ecr_rep" {
+  description = "Name of ECR"
   default     = "cloud-tech-demo"
-  description = ""
 }
 
 variable "cluster_name" {
-  default = "cloud-tech-demo"
+  description = "Name of EKS cluster"
+  default     = "cloud-tech-demo"
 }
 
 variable "project" {
-  description = ""
-  default = "irc"
+  description = "Name of project"
+  default     = "irc"
 }
 
 variable "hosted_zone_name" {
-  default = "cloud-tech-demo.pp.ua"
+  description = "Name of hosted zone on Route 53"
+  default     = "cloud-tech-demo.pp.ua"
 }
 
 variable "alb_name" {
-  default = "cloud-tech-demo"
+  description = "Name of ALB"
+  default     = "cloud-tech-demo"
 }
 
 variable "vpc_name" {
-  default = "cloud-tech-demo-vpc"
+  description = "Name of VPC"
+  default     = "cloud-tech-demo-vpc"
 }

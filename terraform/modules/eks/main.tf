@@ -5,23 +5,23 @@ locals {
   })
   eks_subnets_public_tags = tomap({
     "kubernetes.io/cluster/${var.cluster_name}" = "shared"
-    "kubernetes.io/role/elb"           = 1
+    "kubernetes.io/role/elb"                    = 1
   })
   kubeconfig = templatefile("components/templates/kubeconfig.tpl", {
     certificate_authority_data = aws_eks_cluster.cloud_tech_demo.certificate_authority[0].data
-    endpoint = aws_eks_cluster.cloud_tech_demo.endpoint
-    cluster_arn = aws_eks_cluster.cloud_tech_demo.arn
-    aws_region = var.region
-    cluster_name = aws_eks_cluster.cloud_tech_demo.name
-    aws_profile = var.aws_worker_profile
+    endpoint                   = aws_eks_cluster.cloud_tech_demo.endpoint
+    cluster_arn                = aws_eks_cluster.cloud_tech_demo.arn
+    aws_region                 = var.region
+    cluster_name               = aws_eks_cluster.cloud_tech_demo.name
+    aws_profile                = var.aws_worker_profile
   })
-  public_subnet_ids         = join(",", [ for s in aws_subnet.public.*.id : s ])
+  public_subnet_ids = join(",", [for s in aws_subnet.public.*.id : s])
 }
 
 data "aws_subnets" "cloud_tech_demo" {
   filter {
     name   = "vpc-id"
-    values = [ var.vpc.id ]
+    values = [var.vpc.id]
   }
 
   depends_on = [
@@ -78,7 +78,7 @@ resource "aws_subnet" "private" {
 
 # Elastic-IP (eip) for NAT
 resource "aws_eip" "nat_eip" {
-  vpc        = true
+  vpc = true
   # depends_on = [aws_internet_gateway.id]
   tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "cloud-tech-demo-nat-eip" }))
 }
@@ -147,24 +147,24 @@ data "aws_eks_cluster_auth" "cloud_tech_demo" {
 resource "aws_eks_cluster" "cloud_tech_demo" {
   name     = var.cluster_name
   role_arn = aws_iam_role.cloud_tech_demo.arn
-  version = "1.22"
+  version  = "1.22"
 
   vpc_config {
     subnet_ids              = data.aws_subnets.cloud_tech_demo.ids
     endpoint_private_access = true
     endpoint_public_access  = true
-    security_group_ids = [ aws_security_group.eks_api_private_access.id ]
+    security_group_ids      = [aws_security_group.eks_api_private_access.id]
   }
 
   encryption_config {
     provider {
       key_arn = var.kms_key_arn
     }
-    resources = [ "secrets" ]
+    resources = ["secrets"]
   }
 
   # enabled_cluster_log_types = [ "api" ]
-  
+
   tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = var.cluster_name }))
 
   # Ensure that IAM Role permissions are created before and deleted after EKS Cluster handling.
@@ -186,12 +186,12 @@ resource "aws_security_group" "eks_api_private_access" {
 }
 
 resource "aws_security_group_rule" "inbound_rule_allow_https" {
-  type                     = "ingress"
-  from_port                = 443
-  to_port                  = 443
-  protocol                 = "tcp"
-  cidr_blocks       = [ var.vpc.cidr_block ]
-  security_group_id        = aws_security_group.eks_api_private_access.id
+  type              = "ingress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  cidr_blocks       = [var.vpc.cidr_block]
+  security_group_id = aws_security_group.eks_api_private_access.id
 }
 
 resource "aws_security_group_rule" "outbound_rule_allow_all" {
@@ -199,7 +199,7 @@ resource "aws_security_group_rule" "outbound_rule_allow_all" {
   from_port         = 0
   to_port           = 65535
   protocol          = "all"
-  cidr_blocks       = [ "0.0.0.0/0" ]
+  cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = aws_security_group.eks_api_private_access.id
 }
 
@@ -406,10 +406,10 @@ resource "aws_eks_fargate_profile" "prod" {
 }
 
 # Node
-resource "aws_eks_node_group" "example" {
+resource "aws_eks_node_group" "cloud_tech_demo_node" {
   cluster_name    = aws_eks_cluster.cloud_tech_demo.name
-  node_group_name = "example"
-  node_role_arn   = aws_iam_role.example.arn
+  node_group_name = "cloud_tech_demo_node"
+  node_role_arn   = aws_iam_role.cloud_tech_demo_node.arn
   subnet_ids      = aws_subnet.private.*.id
   instance_types  = ["t3.small"]
 
@@ -426,14 +426,14 @@ resource "aws_eks_node_group" "example" {
   # Ensure that IAM Role permissions are created before and deleted after EKS Node Group handling.
   # Otherwise, EKS will not be able to properly delete EC2 Instances and Elastic Network Interfaces.
   depends_on = [
-    aws_iam_role_policy_attachment.example-AmazonEKSWorkerNodePolicy,
-    aws_iam_role_policy_attachment.example-AmazonEKS_CNI_Policy,
-    aws_iam_role_policy_attachment.example-AmazonEC2ContainerRegistryReadOnly,
+    aws_iam_role_policy_attachment.cloud_tech_demo_node-AmazonEKSWorkerNodePolicy,
+    aws_iam_role_policy_attachment.cloud_tech_demo_node-AmazonEKS_CNI_Policy,
+    aws_iam_role_policy_attachment.cloud_tech_demo_node-AmazonEC2ContainerRegistryReadOnly,
   ]
 }
 
-resource "aws_iam_role" "example" {
-  name = "eks-node-group-example"
+resource "aws_iam_role" "cloud_tech_demo_node" {
+  name = "eks-node-group-cloud-tech-demo"
 
   assume_role_policy = jsonencode({
     Statement = [{
@@ -447,19 +447,19 @@ resource "aws_iam_role" "example" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "example-AmazonEKSWorkerNodePolicy" {
+resource "aws_iam_role_policy_attachment" "cloud_tech_demo_node-AmazonEKSWorkerNodePolicy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-  role       = aws_iam_role.example.name
+  role       = aws_iam_role.cloud_tech_demo_node.name
 }
 
-resource "aws_iam_role_policy_attachment" "example-AmazonEKS_CNI_Policy" {
+resource "aws_iam_role_policy_attachment" "cloud_tech_demo_node-AmazonEKS_CNI_Policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-  role       = aws_iam_role.example.name
+  role       = aws_iam_role.cloud_tech_demo_node.name
 }
 
-resource "aws_iam_role_policy_attachment" "example-AmazonEC2ContainerRegistryReadOnly" {
+resource "aws_iam_role_policy_attachment" "cloud_tech_demo_node-AmazonEC2ContainerRegistryReadOnly" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-  role       = aws_iam_role.example.name
+  role       = aws_iam_role.cloud_tech_demo_node.name
 }
 
 #ADD-ONS
@@ -528,19 +528,19 @@ data "tls_certificate" "cloud_tech_demo" {
 
 data "aws_iam_policy_document" "cloud_tech_demo_assume_role_policy" {
   statement {
-    actions = [ "sts:AssumeRoleWithWebIdentity" ]
+    actions = ["sts:AssumeRoleWithWebIdentity"]
     effect  = "Allow"
 
     condition {
       test     = "StringEquals"
       variable = "${replace(aws_iam_openid_connect_provider.cloud_tech_demo.url, "https://", "")}:sub"
-      values   = [ "system:serviceaccount:kube-system:aws-load-balancer-controller" ]
+      values   = ["system:serviceaccount:kube-system:aws-load-balancer-controller"]
     }
 
     condition {
       test     = "StringEquals"
       variable = "${replace(aws_iam_openid_connect_provider.cloud_tech_demo.url, "https://", "")}:aud"
-      values   = [ "sts.amazonaws.com" ]
+      values   = ["sts.amazonaws.com"]
     }
 
     principals {
@@ -551,8 +551,8 @@ data "aws_iam_policy_document" "cloud_tech_demo_assume_role_policy" {
 }
 
 resource "aws_iam_openid_connect_provider" "cloud_tech_demo" {
-  client_id_list  = [ "sts.amazonaws.com" ]
-  thumbprint_list = [ data.tls_certificate.cloud_tech_demo.certificates[0].sha1_fingerprint ]
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = [data.tls_certificate.cloud_tech_demo.certificates[0].sha1_fingerprint]
   url             = aws_eks_cluster.cloud_tech_demo.identity[0].oidc[0].issuer
 
   tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "cloud-tech-demo" }))
@@ -567,7 +567,7 @@ resource "aws_iam_role" "aws_load_balancer_controller_role" {
     tomap({ "eksctl.cluster.k8s.io/v1alpha1/cluster-name" = aws_eks_cluster.cloud_tech_demo.name }),
     tomap({ "alpha.eksctl.io/iamserviceaccount-name" = "kube-system/aws-load-balancer-controller" }),
     tomap({ "alpha.eksctl.io/eksctl-version" = "0.79.0" }),
-    tomap({ "Name" = "aws-load-balancer-controller" }))
+  tomap({ "Name" = "aws-load-balancer-controller" }))
 }
 
 resource "aws_iam_policy" "ingress_policy" {
@@ -591,7 +591,7 @@ resource "kubernetes_service_account" "cloud_tech_demo" {
     name      = "aws-load-balancer-controller"
     namespace = "kube-system"
     labels = {
-      "app.kubernetes.io/name" = "aws-load-balancer-controller"
+      "app.kubernetes.io/name"      = "aws-load-balancer-controller"
       "app.kubernetes.io/component" = "controller"
     }
     annotations = {
@@ -712,11 +712,11 @@ resource "kubernetes_config_map" "aws_observability" {
 }
 
 data "kubectl_path_documents" "cert_manager" {
-    pattern = "components/manifest/cert-manager.yaml"
+  pattern = "components/manifest/cert-manager.yaml"
 }
 
 resource "kubectl_manifest" "cert_manager" {
-  for_each = data.kubectl_path_documents.cert_manager.manifests
+  for_each  = data.kubectl_path_documents.cert_manager.manifests
   yaml_body = each.value
 
   depends_on = [
@@ -726,11 +726,11 @@ resource "kubectl_manifest" "cert_manager" {
 }
 
 data "kubectl_path_documents" "ingress_alb_controller" {
-    pattern = "components/manifest/v2_4_1_full.yaml"
+  pattern = "components/manifest/v2_4_1_full.yaml"
 }
 
 resource "kubectl_manifest" "ingress_alb_controller" {
-  for_each = data.kubectl_path_documents.ingress_alb_controller.manifests
+  for_each  = data.kubectl_path_documents.ingress_alb_controller.manifests
   yaml_body = each.value
 
   depends_on = [
@@ -742,8 +742,8 @@ resource "kubectl_manifest" "ingress_alb_controller" {
 
 # SSL Cert
 resource "aws_acm_certificate" "cert" {
-  domain_name               = "dummy.${var.hosted_zone_name}"
-  validation_method         = "DNS"
+  domain_name       = "dummy.${var.hosted_zone_name}"
+  validation_method = "DNS"
 
   lifecycle {
     create_before_destroy = true
@@ -768,7 +768,7 @@ resource "aws_route53_record" "cert" {
 
   allow_overwrite = true
   name            = each.value.name
-  records         = [ each.value.record ]
+  records         = [each.value.record]
   ttl             = 60
   type            = each.value.type
   zone_id         = data.aws_route53_zone.cloud_tech_demo.zone_id
@@ -776,7 +776,7 @@ resource "aws_route53_record" "cert" {
 
 resource "aws_acm_certificate_validation" "cert" {
   certificate_arn         = aws_acm_certificate.cert.arn
-  validation_record_fqdns = [ for record in aws_route53_record.cert : record.fqdn ]
+  validation_record_fqdns = [for record in aws_route53_record.cert : record.fqdn]
 }
 
 resource "kubernetes_namespace" "dummy" {
@@ -792,7 +792,7 @@ resource "kubernetes_namespace" "dummy" {
 
 resource "kubernetes_service_v1" "dummy" {
   metadata {
-    name = "dummy-service"
+    name      = "dummy-service"
     namespace = kubernetes_namespace.dummy.metadata[0].name
   }
   spec {
@@ -909,4 +909,3 @@ resource "aws_route53_record" "cloud_tech_demo_ingress" {
     evaluate_target_health = true
   }
 }
-

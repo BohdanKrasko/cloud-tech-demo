@@ -8,16 +8,21 @@ variable "private_subnets" {
   default = ["10.0.5.0/24", "10.0.6.0/24"]
 }
 
+variable "logs_namespace" {
+  default     = "aws-observability"
+  description = "Name of the namespace for CloudWatch Logs"
+}
+
 variable "cloud_tech_demo_tags" {
-  description = "Default C tags"
+  description = "Default cloud-tech-demo tags"
 }
 
 variable "ecr_rep" {
-  description = ""
+  description = "Name of ECR"
 }
 
 variable "cluster_name" {
-  description = ""
+  description = "Name of EKS cluster"
 }
 
 variable "aws_worker_profile" {
@@ -28,31 +33,22 @@ variable "region" {
   description = "The AWS regions used for our environment"
 }
 
-variable "logs_namespace" {
-  default     = "aws-observability"
-  description = "Name of the namespace for CloudWatch Logs"
-}
-
-# variable "lucas_testenv_auth" {
-#   description = ""
-# }
-
 variable "hosted_zone_name" {
-
+  description = "Name of hosted zone on Route 53"
 }
 
 variable "alb_name" {
-
+  description = "Name of ALB"
 }
 
 variable "kms_key_arn" {
-  
+  description = "AWS KMS Key ARN"
 }
 
 variable "cloud_tech_demo_hosted_zone_id" {
-  
+  description = "ID of hosted zone"
 }
 
 variable "vpc" {
-  
+  description = "AWS VPC"
 }
