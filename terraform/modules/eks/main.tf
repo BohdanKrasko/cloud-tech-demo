@@ -742,14 +742,15 @@ resource "kubectl_manifest" "ingress_alb_controller" {
 
 # SSL Cert
 resource "aws_acm_certificate" "cert" {
-  domain_name       = "dummy.${var.hosted_zone_name}"
+  domain_name       = "prometheus.${var.hosted_zone_name}"
+  subject_alternative_names = ["grafana.${var.hosted_zone_name}"]
   validation_method = "DNS"
 
   lifecycle {
     create_before_destroy = true
   }
 
-  tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "dummy.${var.hosted_zone_name}-cert" }))
+  tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "prometheus.${var.hosted_zone_name}-cert" }))
 }
 
 data "aws_route53_zone" "cloud_tech_demo" {
