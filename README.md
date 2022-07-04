@@ -22,4 +22,3 @@ Remove unused docker volumes on (jenkins) EC2 instance
 ```
 docker volume rm $(docker volume ls -qf dangling=true)
 ```
-
