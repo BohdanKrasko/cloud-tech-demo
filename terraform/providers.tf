@@ -19,14 +19,14 @@ provider "kubectl" {
 terraform {
   required_version = "= 1.1.9"
 
-  backend "s3" {
-    region         = "us-east-1"
-    key            = "cloud-tech/terraform.tfstate"
-    bucket         = "terraform-state-lock-cloud-demo"
-    dynamodb_table = "terraform-state-lock-cloud-demo-dynamo"
-    encrypt        = true
-    kms_key_id     = ""
-  }
+  # backend "s3" {
+  #   region         = "us-east-1"
+  #   key            = "cloud-tech/terraform.tfstate"
+  #   bucket         = "terraform-state-lock-cloud-demo"
+  #   dynamodb_table = "terraform-state-lock-cloud-demo-dynamo"
+  #   encrypt        = true
+  #   kms_key_id     = ""
+  # }
 
   required_providers {
     aws = {
