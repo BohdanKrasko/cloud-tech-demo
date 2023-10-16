@@ -1,10 +1,10 @@
-module "state_locking" {
-  count  = terraform.workspace == "default" ? 1 : 0
-  source = "./modules/state-locking"
-}
+# module "state_locking" {
+#   count  = terraform.workspace == "default" ? 1 : 0
+#   source = "./modules/state-locking"
+# }
 
 module "components" {
-  count                = terraform.workspace == "default" ? 1 : 0
+  count                = 1
   source               = "./modules/components"
   hosted_zone_name     = var.hosted_zone_name
   alb_name             = var.alb_name
@@ -14,7 +14,7 @@ module "components" {
 }
 
 module "eks" {
-  count                          = terraform.workspace == "default" ? 1 : 0
+  count                          = 1
   source                         = "./modules/eks"
   cloud_tech_demo_tags           = var.cloud_tech_demo_tags
   ecr_rep                        = var.ecr_rep
@@ -29,7 +29,7 @@ module "eks" {
 }
 
 module "app" {
-  count                = terraform.workspace == "default" ? 0 : 1
+  count                = 0
   source               = "./modules/app"
   project              = var.project
   cloud_tech_demo_tags = var.cloud_tech_demo_tags

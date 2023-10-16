@@ -147,7 +147,7 @@ data "aws_eks_cluster_auth" "cloud_tech_demo" {
 resource "aws_eks_cluster" "cloud_tech_demo" {
   name     = var.cluster_name
   role_arn = aws_iam_role.cloud_tech_demo.arn
-  version  = "1.22"
+  version  = "1.23"
 
   vpc_config {
     subnet_ids              = data.aws_subnets.cloud_tech_demo.ids
@@ -325,15 +325,15 @@ resource "local_file" "kubeconfig" {
   ]
 }
 
-resource "null_resource" "coredns" {
-  triggers = {
-    eks_cluster = aws_eks_cluster.cloud_tech_demo.name
-  }
+# resource "null_resource" "coredns" {
+#   triggers = {
+#     eks_cluster = aws_eks_cluster.cloud_tech_demo.name
+#   }
 
-  provisioner "local-exec" {
-    command = "KUBECONFIG=${local_file.kubeconfig.filename} kubectl delete deployment coredns -n kube-system"
-  }
-}
+#   provisioner "local-exec" {
+#     command = "KUBECONFIG=${local_file.kubeconfig.filename} kubectl delete deployment coredns -n kube-system"
+#   }
+# }
 
 # ADD TAGS FOR PRIMARY EKS SG
 resource "aws_ec2_tag" "cluster_primary_security_group" {
@@ -349,61 +349,61 @@ resource "aws_ec2_tag" "cluster_primary_security_group" {
 }
 
 # FARGATE PROFILES
-resource "aws_eks_fargate_profile" "cert_manager" {
-  cluster_name           = aws_eks_cluster.cloud_tech_demo.name
-  fargate_profile_name   = "cert-manager"
-  pod_execution_role_arn = aws_iam_role.cloud_tech_demo_pod.arn
-  subnet_ids             = aws_subnet.private.*.id
+# resource "aws_eks_fargate_profile" "cert_manager" {
+#   cluster_name           = aws_eks_cluster.cloud_tech_demo.name
+#   fargate_profile_name   = "cert-manager"
+#   pod_execution_role_arn = aws_iam_role.cloud_tech_demo_pod.arn
+#   subnet_ids             = aws_subnet.private.*.id
 
-  selector {
-    namespace = "cert-manager"
-  }
+#   selector {
+#     namespace = "cert-manager"
+#   }
 
-  tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "fargate-profile-cert-manager" }))
-}
+#   tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "fargate-profile-cert-manager" }))
+# }
 
-resource "aws_eks_fargate_profile" "kube_system" {
-  cluster_name           = aws_eks_cluster.cloud_tech_demo.name
-  fargate_profile_name   = "kube-system"
-  pod_execution_role_arn = aws_iam_role.cloud_tech_demo_pod.arn
-  subnet_ids             = aws_subnet.private.*.id
+# resource "aws_eks_fargate_profile" "kube_system" {
+#   cluster_name           = aws_eks_cluster.cloud_tech_demo.name
+#   fargate_profile_name   = "kube-system"
+#   pod_execution_role_arn = aws_iam_role.cloud_tech_demo_pod.arn
+#   subnet_ids             = aws_subnet.private.*.id
 
-  selector {
-    namespace = "kube-system"
-    # labels = {
-    #   "k8s-app" = "kube-dns"
-    # }
-  }
+#   selector {
+#     namespace = "kube-system"
+#     # labels = {
+#     #   "k8s-app" = "kube-dns"
+#     # }
+#   }
 
-  tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "fargate-profile-kube-system" }))
-}
+#   tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "fargate-profile-kube-system" }))
+# }
 
-resource "aws_eks_fargate_profile" "stage" {
-  cluster_name           = aws_eks_cluster.cloud_tech_demo.name
-  fargate_profile_name   = "stage"
-  pod_execution_role_arn = aws_iam_role.cloud_tech_demo_pod.arn
-  subnet_ids             = aws_subnet.private.*.id
+# resource "aws_eks_fargate_profile" "stage" {
+#   cluster_name           = aws_eks_cluster.cloud_tech_demo.name
+#   fargate_profile_name   = "stage"
+#   pod_execution_role_arn = aws_iam_role.cloud_tech_demo_pod.arn
+#   subnet_ids             = aws_subnet.private.*.id
 
-  selector {
-    namespace = "stage"
-  }
+#   selector {
+#     namespace = "stage"
+#   }
 
-  tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "stage" }))
-}
+#   tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "stage" }))
+# }
 
 
-resource "aws_eks_fargate_profile" "prod" {
-  cluster_name           = aws_eks_cluster.cloud_tech_demo.name
-  fargate_profile_name   = "prod"
-  pod_execution_role_arn = aws_iam_role.cloud_tech_demo_pod.arn
-  subnet_ids             = aws_subnet.private.*.id
+# resource "aws_eks_fargate_profile" "prod" {
+#   cluster_name           = aws_eks_cluster.cloud_tech_demo.name
+#   fargate_profile_name   = "prod"
+#   pod_execution_role_arn = aws_iam_role.cloud_tech_demo_pod.arn
+#   subnet_ids             = aws_subnet.private.*.id
 
-  selector {
-    namespace = "prod"
-  }
+#   selector {
+#     namespace = "prod"
+#   }
 
-  tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "prod" }))
-}
+#   tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "prod" }))
+# }
 
 # Node
 resource "aws_eks_node_group" "cloud_tech_demo_node" {
@@ -476,7 +476,7 @@ resource "aws_eks_addon" "vpc_cni" {
   tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "vpc-cni" }))
 
   depends_on = [
-    aws_eks_fargate_profile.kube_system,
+    aws_eks_node_group.cloud_tech_demo_node
   ]
 }
 
@@ -494,7 +494,7 @@ resource "aws_eks_addon" "coredns" {
   tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "coredns" }))
 
   depends_on = [
-    aws_eks_fargate_profile.kube_system,
+    aws_eks_node_group.cloud_tech_demo_node
   ]
 }
 
@@ -512,7 +512,7 @@ resource "aws_eks_addon" "kube_proxy" {
   tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "kube-proxy" }))
 
   depends_on = [
-    aws_eks_fargate_profile.kube_system,
+    aws_eks_node_group.cloud_tech_demo_node
   ]
 }
 
@@ -720,7 +720,7 @@ resource "kubectl_manifest" "cert_manager" {
   yaml_body = each.value
 
   depends_on = [
-    aws_eks_fargate_profile.cert_manager,
+    # aws_eks_fargate_profile.cert_manager,
     kubernetes_config_map.aws_observability
   ]
 }
@@ -735,178 +735,178 @@ resource "kubectl_manifest" "ingress_alb_controller" {
 
   depends_on = [
     kubectl_manifest.cert_manager,
-    aws_eks_fargate_profile.kube_system,
+    # aws_eks_fargate_profile.kube_system,
     kubernetes_service_account.cloud_tech_demo
   ]
 }
 
 # SSL Cert
-resource "aws_acm_certificate" "cert" {
-  domain_name       = "prometheus.${var.hosted_zone_name}"
-  subject_alternative_names = ["grafana.${var.hosted_zone_name}"]
-  validation_method = "DNS"
+# resource "aws_acm_certificate" "cert" {
+#   domain_name       = "prometheus.${var.hosted_zone_name}"
+#   subject_alternative_names = ["grafana.${var.hosted_zone_name}"]
+#   validation_method = "DNS"
 
-  lifecycle {
-    create_before_destroy = true
-  }
+#   lifecycle {
+#     create_before_destroy = true
+#   }
 
-  tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "prometheus.${var.hosted_zone_name}-cert" }))
-}
+#   tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "prometheus.${var.hosted_zone_name}-cert" }))
+# }
 
-data "aws_route53_zone" "cloud_tech_demo" {
-  name         = var.hosted_zone_name
-  private_zone = false
-}
+# data "aws_route53_zone" "cloud_tech_demo" {
+#   name         = var.hosted_zone_name
+#   private_zone = false
+# }
 
-resource "aws_route53_record" "cert" {
-  for_each = {
-    for dvo in aws_acm_certificate.cert.domain_validation_options : dvo.domain_name => {
-      name   = dvo.resource_record_name
-      record = dvo.resource_record_value
-      type   = dvo.resource_record_type
-    }
-  }
+# resource "aws_route53_record" "cert" {
+#   for_each = {
+#     for dvo in aws_acm_certificate.cert.domain_validation_options : dvo.domain_name => {
+#       name   = dvo.resource_record_name
+#       record = dvo.resource_record_value
+#       type   = dvo.resource_record_type
+#     }
+#   }
 
-  allow_overwrite = true
-  name            = each.value.name
-  records         = [each.value.record]
-  ttl             = 60
-  type            = each.value.type
-  zone_id         = data.aws_route53_zone.cloud_tech_demo.zone_id
-}
+#   allow_overwrite = true
+#   name            = each.value.name
+#   records         = [each.value.record]
+#   ttl             = 60
+#   type            = each.value.type
+#   zone_id         = data.aws_route53_zone.cloud_tech_demo.zone_id
+# }
 
-resource "aws_acm_certificate_validation" "cert" {
-  certificate_arn         = aws_acm_certificate.cert.arn
-  validation_record_fqdns = [for record in aws_route53_record.cert : record.fqdn]
-}
+# resource "aws_acm_certificate_validation" "cert" {
+#   certificate_arn         = aws_acm_certificate.cert.arn
+#   validation_record_fqdns = [for record in aws_route53_record.cert : record.fqdn]
+# }
 
-resource "kubernetes_namespace" "dummy" {
-  metadata {
-    name = "dummy"
-  }
-  depends_on = [
-    kubectl_manifest.ingress_alb_controller,
-    aws_nat_gateway.nat,
-    aws_route.private_nat_gateway
-  ]
-}
+# resource "kubernetes_namespace" "dummy" {
+#   metadata {
+#     name = "dummy"
+#   }
+#   depends_on = [
+#     kubectl_manifest.ingress_alb_controller,
+#     aws_nat_gateway.nat,
+#     aws_route.private_nat_gateway
+#   ]
+# }
 
-resource "kubernetes_service_v1" "dummy" {
-  metadata {
-    name      = "dummy-service"
-    namespace = kubernetes_namespace.dummy.metadata[0].name
-  }
-  spec {
-    port {
-      port        = 80
-      target_port = 80
-      protocol    = "TCP"
-    }
-    type = "NodePort"
-  }
-}
+# resource "kubernetes_service_v1" "dummy" {
+#   metadata {
+#     name      = "dummy-service"
+#     namespace = kubernetes_namespace.dummy.metadata[0].name
+#   }
+#   spec {
+#     port {
+#       port        = 80
+#       target_port = 80
+#       protocol    = "TCP"
+#     }
+#     type = "NodePort"
+#   }
+# }
 
-resource "kubernetes_ingress_v1" "dummy_80" {
-  wait_for_load_balancer = true
+# resource "kubernetes_ingress_v1" "dummy_80" {
+#   wait_for_load_balancer = true
 
-  metadata {
-    name      = "dummy-80"
-    namespace = kubernetes_namespace.dummy.metadata[0].name
-    annotations = {
-      "alb.ingress.kubernetes.io/load-balancer-name" = var.alb_name
-      "alb.ingress.kubernetes.io/group.name"         = "stage.group"
-      "alb.ingress.kubernetes.io/tags"               = join(",", [for key, value in var.cloud_tech_demo_tags : "${key}=${value}"])
-      "alb.ingress.kubernetes.io/scheme"             = "internet-facing"
-      "alb.ingress.kubernetes.io/subnets"            = local.public_subnet_ids
-      "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTP\": 80}]"
-      "alb.ingress.kubernetes.io/ssl-redirect"       = 443
-      "alb.ingress.kubernetes.io/target-type"        = "ip"
-      "alb.ingress.kubernetes.io/backend-protocol"   = "HTTP"
-      "nginx.ingress.kubernetes.io/rewrite-target"   = "/"
-    }
-  }
+#   metadata {
+#     name      = "dummy-80"
+#     namespace = kubernetes_namespace.dummy.metadata[0].name
+#     annotations = {
+#       "alb.ingress.kubernetes.io/load-balancer-name" = var.alb_name
+#       "alb.ingress.kubernetes.io/group.name"         = "stage.group"
+#       "alb.ingress.kubernetes.io/tags"               = join(",", [for key, value in var.cloud_tech_demo_tags : "${key}=${value}"])
+#       "alb.ingress.kubernetes.io/scheme"             = "internet-facing"
+#       "alb.ingress.kubernetes.io/subnets"            = local.public_subnet_ids
+#       "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTP\": 80}]"
+#       "alb.ingress.kubernetes.io/ssl-redirect"       = 443
+#       "alb.ingress.kubernetes.io/target-type"        = "ip"
+#       "alb.ingress.kubernetes.io/backend-protocol"   = "HTTP"
+#       "nginx.ingress.kubernetes.io/rewrite-target"   = "/"
+#     }
+#   }
 
-  spec {
-    ingress_class_name = "alb"
-    rule {
-      host = "dummy.${var.hosted_zone_name}"
-      http {
-        path {
-          path_type = "ImplementationSpecific"
-          backend {
-            service {
-              name = kubernetes_service_v1.dummy.metadata.0.name
-              port {
-                number = 80
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+#   spec {
+#     ingress_class_name = "alb"
+#     rule {
+#       host = "dummy.${var.hosted_zone_name}"
+#       http {
+#         path {
+#           path_type = "ImplementationSpecific"
+#           backend {
+#             service {
+#               name = kubernetes_service_v1.dummy.metadata.0.name
+#               port {
+#                 number = 80
+#               }
+#             }
+#           }
+#         }
+#       }
+#     }
+#   }
 
-  depends_on = [
-    kubectl_manifest.ingress_alb_controller
-  ]
-}
+#   depends_on = [
+#     kubectl_manifest.ingress_alb_controller
+#   ]
+# }
 
-resource "kubernetes_ingress_v1" "dummy_443" {
-  wait_for_load_balancer = true
+# resource "kubernetes_ingress_v1" "dummy_443" {
+#   wait_for_load_balancer = true
 
-  metadata {
-    name      = "dummy-443"
-    namespace = kubernetes_namespace.dummy.metadata[0].name
-    annotations = {
-      "alb.ingress.kubernetes.io/load-balancer-name" = var.alb_name
-      "alb.ingress.kubernetes.io/group.name"         = "stage.group"
-      "alb.ingress.kubernetes.io/tags"               = join(",", [for key, value in var.cloud_tech_demo_tags : "${key}=${value}"])
-      "alb.ingress.kubernetes.io/scheme"             = "internet-facing"
-      "alb.ingress.kubernetes.io/subnets"            = local.public_subnet_ids
-      "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTPS\": 443}]"
-      "alb.ingress.kubernetes.io/certificate-arn"    = aws_acm_certificate.cert.arn
-      "alb.ingress.kubernetes.io/ssl-redirect"       = 443
-      "alb.ingress.kubernetes.io/target-type"        = "ip"
-      "alb.ingress.kubernetes.io/backend-protocol"   = "HTTPS"
-      "nginx.ingress.kubernetes.io/rewrite-target"   = "/"
-    }
-  }
+#   metadata {
+#     name      = "dummy-443"
+#     namespace = kubernetes_namespace.dummy.metadata[0].name
+#     annotations = {
+#       "alb.ingress.kubernetes.io/load-balancer-name" = var.alb_name
+#       "alb.ingress.kubernetes.io/group.name"         = "stage.group"
+#       "alb.ingress.kubernetes.io/tags"               = join(",", [for key, value in var.cloud_tech_demo_tags : "${key}=${value}"])
+#       "alb.ingress.kubernetes.io/scheme"             = "internet-facing"
+#       "alb.ingress.kubernetes.io/subnets"            = local.public_subnet_ids
+#       "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTPS\": 443}]"
+#       "alb.ingress.kubernetes.io/certificate-arn"    = aws_acm_certificate.cert.arn
+#       "alb.ingress.kubernetes.io/ssl-redirect"       = 443
+#       "alb.ingress.kubernetes.io/target-type"        = "ip"
+#       "alb.ingress.kubernetes.io/backend-protocol"   = "HTTPS"
+#       "nginx.ingress.kubernetes.io/rewrite-target"   = "/"
+#     }
+#   }
 
-  spec {
-    ingress_class_name = "alb"
-    rule {
-      host = "dummy.${var.hosted_zone_name}"
-      http {
-        path {
-          path_type = "ImplementationSpecific"
-          backend {
-            service {
-              name = kubernetes_service_v1.dummy.metadata.0.name
-              port {
-                number = 80
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+#   spec {
+#     ingress_class_name = "alb"
+#     rule {
+#       host = "dummy.${var.hosted_zone_name}"
+#       http {
+#         path {
+#           path_type = "ImplementationSpecific"
+#           backend {
+#             service {
+#               name = kubernetes_service_v1.dummy.metadata.0.name
+#               port {
+#                 number = 80
+#               }
+#             }
+#           }
+#         }
+#       }
+#     }
+#   }
 
-  depends_on = [
-    kubectl_manifest.ingress_alb_controller
-  ]
-}
+#   depends_on = [
+#     kubectl_manifest.ingress_alb_controller
+#   ]
+# }
 
-data "aws_elb_hosted_zone_id" "main" {}
+# data "aws_elb_hosted_zone_id" "main" {}
 
-resource "aws_route53_record" "cloud_tech_demo_ingress" {
-  zone_id = var.cloud_tech_demo_hosted_zone_id
-  name    = "${var.alb_name}.${var.region}.${var.hosted_zone_name}"
-  type    = "A"
+# resource "aws_route53_record" "cloud_tech_demo_ingress" {
+#   zone_id = var.cloud_tech_demo_hosted_zone_id
+#   name    = "${var.alb_name}.${var.region}.${var.hosted_zone_name}"
+#   type    = "A"
 
-  alias {
-    name                   = kubernetes_ingress_v1.dummy_80.status.0.load_balancer.0.ingress.0.hostname
-    zone_id                = data.aws_elb_hosted_zone_id.main.id
-    evaluate_target_health = true
-  }
-}
+#   alias {
+#     name                   = kubernetes_ingress_v1.dummy_80.status.0.load_balancer.0.ingress.0.hostname
+#     zone_id                = data.aws_elb_hosted_zone_id.main.id
+#     evaluate_target_health = true
+#   }
+# }
