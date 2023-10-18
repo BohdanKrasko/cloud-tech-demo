@@ -45,10 +45,6 @@ variable "kms_key_arn" {
   description = "AWS KMS Key ARN"
 }
 
-variable "cloud_tech_demo_hosted_zone_id" {
-  description = "ID of hosted zone"
-}
-
 variable "vpc" {
   description = "AWS VPC"
 }

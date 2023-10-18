@@ -25,7 +25,6 @@ module "eks" {
   alb_name                       = var.alb_name
   kms_key_arn                    = module.components[0].kms_key_arn
   vpc                            = module.components[0].vpc
-  cloud_tech_demo_hosted_zone_id = module.components[0].cloud_tech_demo_hosted_zone_id
 }
 
 module "app" {

@@ -4,9 +4,9 @@ provider "aws" {
 }
 
 provider "kubernetes" {
-  host                   = terraform.workspace == "default" ? module.eks[0].eks_endpoint : module.app[0].eks_endpoint
-  cluster_ca_certificate = terraform.workspace == "default" ? base64decode(module.eks[0].eks_certificate_authority) : base64decode(module.app[0].eks_certificate_authority)
-  token                  = terraform.workspace == "default" ? module.eks[0].eks_auth_token : module.app[0].eks_auth_token
+  host                   = module.eks[0].eks_endpoint
+  cluster_ca_certificate = base64decode(module.eks[0].eks_certificate_authority)
+  token                  = module.eks[0].eks_auth_token
 }
 
 provider "kubectl" {

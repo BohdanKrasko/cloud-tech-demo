@@ -7,14 +7,14 @@ locals {
     "kubernetes.io/cluster/${var.cluster_name}" = "shared"
     "kubernetes.io/role/elb"                    = 1
   })
-  kubeconfig = templatefile("components/templates/kubeconfig.tpl", {
-    certificate_authority_data = aws_eks_cluster.cloud_tech_demo.certificate_authority[0].data
-    endpoint                   = aws_eks_cluster.cloud_tech_demo.endpoint
-    cluster_arn                = aws_eks_cluster.cloud_tech_demo.arn
-    aws_region                 = var.region
-    cluster_name               = aws_eks_cluster.cloud_tech_demo.name
-    aws_profile                = var.aws_worker_profile
-  })
+  # kubeconfig = templatefile("components/templates/kubeconfig.tpl", {
+  #   certificate_authority_data = aws_eks_cluster.cloud_tech_demo.certificate_authority[0].data
+  #   endpoint                   = aws_eks_cluster.cloud_tech_demo.endpoint
+  #   cluster_arn                = aws_eks_cluster.cloud_tech_demo.arn
+  #   aws_region                 = var.region
+  #   cluster_name               = aws_eks_cluster.cloud_tech_demo.name
+  #   aws_profile                = var.aws_worker_profile
+  # })
   public_subnet_ids = join(",", [for s in aws_subnet.public.*.id : s])
 }
 
@@ -29,19 +29,6 @@ data "aws_subnets" "cloud_tech_demo" {
     aws_subnet.private
   ]
 }
-
-# data "aws_subnets" "private" {
-#   filter {
-#     name   = "vpc-id"
-#     values = [ var.vpc.id ]
-#   }
-
-#   tags = {
-#     Tier = "Private"
-#   }
-# }
-
-
 
 # Network
 data "aws_availability_zones" "available" {}
@@ -131,9 +118,6 @@ resource "aws_route_table_association" "private" {
   subnet_id      = element(aws_subnet.private.*.id, count.index)
   route_table_id = aws_route_table.private.id
 }
-
-
-
 
 #EKS
 data "aws_eks_cluster" "cloud_tech_demo" {
@@ -231,108 +215,98 @@ resource "aws_iam_role_policy_attachment" "cloud_tech_demo_AmazonEKSVPCResourceC
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
 }
 
-data "aws_iam_policy_document" "cloud_watch" {
-  statement {
-    sid = "CloudWatchPermission"
-    actions = [
-      "logs:CreateLogStream",
-      "logs:CreateLogGroup",
-      "logs:DescribeLogStreams",
-      "logs:PutLogEvents"
-    ]
-    resources = [
-      "*"
-    ]
-  }
-}
-
-#IAM ROLE FOR EKS FARGATE PROFILE
-data "aws_iam_policy_document" "cloud_tech_demo_pod_role_policy" {
-  statement {
-    actions = ["sts:AssumeRole"]
-    principals {
-      type        = "Service"
-      identifiers = ["eks-fargate-pods.amazonaws.com"]
-    }
-  }
-}
-
-data "aws_iam_policy_document" "ecr" {
-  statement {
-    sid = "ECR"
-    actions = [
-      "ecr:BatchCheckLayerAvailability",
-      "ecr:BatchGetImage",
-      "ecr:GetDownloadUrlForLayer",
-      "ecr:GetAuthorizationToken"
-    ]
-    resources = [
-      "*"
-    ]
-  }
-}
-
-resource "aws_iam_role" "cloud_tech_demo_pod" {
-  name               = "eks-fargate-profile"
-  assume_role_policy = data.aws_iam_policy_document.cloud_tech_demo_pod_role_policy.json
-
-  tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "eks-fargate-profile" }))
-}
-
-resource "aws_iam_policy" "cloud_watch" {
-  name        = "CloudWatchIAMPolicy"
-  path        = "/"
-  description = "CloudWatch IAM Policy"
-  policy      = data.aws_iam_policy_document.cloud_watch.json
-
-  tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "CloudWatchIAMPolicy" }))
-}
-
-resource "aws_iam_policy" "ecr" {
-  name        = "ECRIAMPolicy"
-  path        = "/"
-  description = "ECR IAM Policy"
-  policy      = data.aws_iam_policy_document.ecr.json
-
-  tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "ECRIAMPolicy" }))
-}
-
-resource "aws_iam_role_policy_attachment" "cloud_watch" {
-  role       = aws_iam_role.cloud_tech_demo_pod.name
-  policy_arn = aws_iam_policy.cloud_watch.arn
-}
-
-resource "aws_iam_role_policy_attachment" "ecr" {
-  role       = aws_iam_role.cloud_tech_demo_pod.name
-  policy_arn = aws_iam_policy.ecr.arn
-}
-
-resource "aws_iam_role_policy_attachment" "cloud_tech_demo_pod_AmazonEKSFargatePodExecutionRolePolicy" {
-  role       = aws_iam_role.cloud_tech_demo_pod.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy"
-}
-
-
-# DELETE DEFAULT COREDNS DEPLOYMENT
-resource "local_file" "kubeconfig" {
-  content              = local.kubeconfig
-  filename             = "./kubeconfig-${aws_eks_cluster.cloud_tech_demo.name}"
-  file_permission      = "0600"
-  directory_permission = "0755"
-
-  depends_on = [
-    aws_eks_cluster.cloud_tech_demo
-  ]
-}
-
-# resource "null_resource" "coredns" {
-#   triggers = {
-#     eks_cluster = aws_eks_cluster.cloud_tech_demo.name
+# data "aws_iam_policy_document" "cloud_watch" {
+#   statement {
+#     sid = "CloudWatchPermission"
+#     actions = [
+#       "logs:CreateLogStream",
+#       "logs:CreateLogGroup",
+#       "logs:DescribeLogStreams",
+#       "logs:PutLogEvents"
+#     ]
+#     resources = [
+#       "*"
+#     ]
 #   }
+# }
 
-#   provisioner "local-exec" {
-#     command = "KUBECONFIG=${local_file.kubeconfig.filename} kubectl delete deployment coredns -n kube-system"
+# #IAM ROLE FOR EKS FARGATE PROFILE
+# data "aws_iam_policy_document" "cloud_tech_demo_pod_role_policy" {
+#   statement {
+#     actions = ["sts:AssumeRole"]
+#     principals {
+#       type        = "Service"
+#       identifiers = ["eks-fargate-pods.amazonaws.com"]
+#     }
 #   }
+# }
+
+# data "aws_iam_policy_document" "ecr" {
+#   statement {
+#     sid = "ECR"
+#     actions = [
+#       "ecr:BatchCheckLayerAvailability",
+#       "ecr:BatchGetImage",
+#       "ecr:GetDownloadUrlForLayer",
+#       "ecr:GetAuthorizationToken"
+#     ]
+#     resources = [
+#       "*"
+#     ]
+#   }
+# }
+
+# resource "aws_iam_role" "cloud_tech_demo_pod" {
+#   name               = "eks-fargate-profile"
+#   assume_role_policy = data.aws_iam_policy_document.cloud_tech_demo_pod_role_policy.json
+
+#   tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "eks-fargate-profile" }))
+# }
+
+# resource "aws_iam_policy" "cloud_watch" {
+#   name        = "CloudWatchIAMPolicy"
+#   path        = "/"
+#   description = "CloudWatch IAM Policy"
+#   policy      = data.aws_iam_policy_document.cloud_watch.json
+
+#   tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "CloudWatchIAMPolicy" }))
+# }
+
+# resource "aws_iam_policy" "ecr" {
+#   name        = "ECRIAMPolicy"
+#   path        = "/"
+#   description = "ECR IAM Policy"
+#   policy      = data.aws_iam_policy_document.ecr.json
+
+#   tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "ECRIAMPolicy" }))
+# }
+
+# resource "aws_iam_role_policy_attachment" "cloud_watch" {
+#   role       = aws_iam_role.cloud_tech_demo_pod.name
+#   policy_arn = aws_iam_policy.cloud_watch.arn
+# }
+
+# resource "aws_iam_role_policy_attachment" "ecr" {
+#   role       = aws_iam_role.cloud_tech_demo_pod.name
+#   policy_arn = aws_iam_policy.ecr.arn
+# }
+
+# resource "aws_iam_role_policy_attachment" "cloud_tech_demo_pod_AmazonEKSFargatePodExecutionRolePolicy" {
+#   role       = aws_iam_role.cloud_tech_demo_pod.name
+#   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy"
+# }
+
+
+# # DELETE DEFAULT COREDNS DEPLOYMENT
+# resource "local_file" "kubeconfig" {
+#   content              = local.kubeconfig
+#   filename             = "./kubeconfig-${aws_eks_cluster.cloud_tech_demo.name}"
+#   file_permission      = "0600"
+#   directory_permission = "0755"
+
+#   depends_on = [
+#     aws_eks_cluster.cloud_tech_demo
+#   ]
 # }
 
 # ADD TAGS FOR PRIMARY EKS SG
@@ -347,63 +321,6 @@ resource "aws_ec2_tag" "cluster_primary_security_group" {
     aws_eks_cluster.cloud_tech_demo
   ]
 }
-
-# FARGATE PROFILES
-# resource "aws_eks_fargate_profile" "cert_manager" {
-#   cluster_name           = aws_eks_cluster.cloud_tech_demo.name
-#   fargate_profile_name   = "cert-manager"
-#   pod_execution_role_arn = aws_iam_role.cloud_tech_demo_pod.arn
-#   subnet_ids             = aws_subnet.private.*.id
-
-#   selector {
-#     namespace = "cert-manager"
-#   }
-
-#   tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "fargate-profile-cert-manager" }))
-# }
-
-# resource "aws_eks_fargate_profile" "kube_system" {
-#   cluster_name           = aws_eks_cluster.cloud_tech_demo.name
-#   fargate_profile_name   = "kube-system"
-#   pod_execution_role_arn = aws_iam_role.cloud_tech_demo_pod.arn
-#   subnet_ids             = aws_subnet.private.*.id
-
-#   selector {
-#     namespace = "kube-system"
-#     # labels = {
-#     #   "k8s-app" = "kube-dns"
-#     # }
-#   }
-
-#   tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "fargate-profile-kube-system" }))
-# }
-
-# resource "aws_eks_fargate_profile" "stage" {
-#   cluster_name           = aws_eks_cluster.cloud_tech_demo.name
-#   fargate_profile_name   = "stage"
-#   pod_execution_role_arn = aws_iam_role.cloud_tech_demo_pod.arn
-#   subnet_ids             = aws_subnet.private.*.id
-
-#   selector {
-#     namespace = "stage"
-#   }
-
-#   tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "stage" }))
-# }
-
-
-# resource "aws_eks_fargate_profile" "prod" {
-#   cluster_name           = aws_eks_cluster.cloud_tech_demo.name
-#   fargate_profile_name   = "prod"
-#   pod_execution_role_arn = aws_iam_role.cloud_tech_demo_pod.arn
-#   subnet_ids             = aws_subnet.private.*.id
-
-#   selector {
-#     namespace = "prod"
-#   }
-
-#   tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "prod" }))
-# }
 
 # Node
 resource "aws_eks_node_group" "cloud_tech_demo_node" {
@@ -558,355 +475,187 @@ resource "aws_iam_openid_connect_provider" "cloud_tech_demo" {
   tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "cloud-tech-demo" }))
 }
 
-resource "aws_iam_role" "aws_load_balancer_controller_role" {
-  assume_role_policy = data.aws_iam_policy_document.cloud_tech_demo_assume_role_policy.json
-  name               = "aws-load-balancer-controller"
+# ////////
 
-  tags = merge(var.cloud_tech_demo_tags,
-    tomap({ "alpha.eksctl.io/cluster-name" = aws_eks_cluster.cloud_tech_demo.name }),
-    tomap({ "eksctl.cluster.k8s.io/v1alpha1/cluster-name" = aws_eks_cluster.cloud_tech_demo.name }),
-    tomap({ "alpha.eksctl.io/iamserviceaccount-name" = "kube-system/aws-load-balancer-controller" }),
-    tomap({ "alpha.eksctl.io/eksctl-version" = "0.79.0" }),
-  tomap({ "Name" = "aws-load-balancer-controller" }))
-}
+# resource "aws_iam_role" "aws_load_balancer_controller_role" {
+#   assume_role_policy = data.aws_iam_policy_document.cloud_tech_demo_assume_role_policy.json
+#   name               = "aws-load-balancer-controller"
 
-resource "aws_iam_policy" "ingress_policy" {
-  name        = "AWSLoadBalancerControllerIAMPolicy"
-  path        = "/"
-  description = "ALB Ingress Controller IAM Policy"
-  policy      = file("components/policy/iam-policy.json")
-
-  tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "AWSLoadBalancerControllerIAMPolicy" }))
-}
-
-resource "aws_iam_role_policy_attachment" "aws_load_balancer_controller_role_AWSLoadBalancerControllerIAMPolicy" {
-  role       = aws_iam_role.aws_load_balancer_controller_role.name
-  policy_arn = aws_iam_policy.ingress_policy.arn
-}
-
-
-#SERVICE ACCOUNT
-resource "kubernetes_service_account" "cloud_tech_demo" {
-  metadata {
-    name      = "aws-load-balancer-controller"
-    namespace = "kube-system"
-    labels = {
-      "app.kubernetes.io/name"      = "aws-load-balancer-controller"
-      "app.kubernetes.io/component" = "controller"
-    }
-    annotations = {
-      "eks.amazonaws.com/role-arn" = aws_iam_role.aws_load_balancer_controller_role.arn
-    }
-  }
-
-  depends_on = [
-    aws_eks_cluster.cloud_tech_demo,
-    aws_iam_role.aws_load_balancer_controller_role,
-  ]
-}
-
-#RBAC ROLE
-resource "kubernetes_cluster_role" "rbac_role" {
-  metadata {
-    name = "aws-load-balancer-controller"
-    labels = {
-      "app.kubernetes.io/name" = "aws-load-balancer-controller"
-    }
-  }
-
-  rule {
-    api_groups = ["", "extensions"]
-    resources  = ["configmaps", "endpoints", "events", "ingresses", "ingresses/status", "services"]
-    verbs      = ["create", "get", "list", "update", "watch", "patch"]
-  }
-
-  rule {
-    api_groups = ["", "extensions"]
-    resources  = ["nodes", "pods", "secrets", "services", "namespaces"]
-    verbs      = ["get", "list", "watch"]
-  }
-
-  depends_on = [
-    aws_eks_cluster.cloud_tech_demo
-  ]
-}
-
-resource "kubernetes_cluster_role_binding" "rbac_role" {
-  metadata {
-    name = "aws-load-balancer-controller"
-    labels = {
-      "app.kubernetes.io/name" = "aws-load-balancer-controller"
-    }
-  }
-
-  role_ref {
-    api_group = "rbac.authorization.k8s.io"
-    kind      = "ClusterRole"
-    name      = "aws-load-balancer-controller"
-  }
-
-  subject {
-    kind      = "ServiceAccount"
-    name      = "aws-load-balancer-controller"
-    namespace = "kube-system"
-  }
-
-  depends_on = [
-    aws_eks_cluster.cloud_tech_demo,
-    kubernetes_cluster_role.rbac_role
-  ]
-}
-
-#CLOUDWATCH SETUP
-resource "kubernetes_namespace" "aws_observability" {
-  metadata {
-    labels = {
-      aws-observability = "enabled"
-    }
-    name = var.logs_namespace
-  }
-
-  depends_on = [
-    aws_eks_cluster.cloud_tech_demo
-  ]
-}
-
-resource "kubernetes_config_map" "aws_observability" {
-  metadata {
-    name      = "aws-logging"
-    namespace = var.logs_namespace
-  }
-
-  data = {
-    "filters.conf" = <<-EOT
-      [FILTER]
-        Name parser
-        Match *
-        Key_name log
-        Parser crio
-    EOT
-    "output.conf"  = <<-EOT
-      [OUTPUT]
-        Name cloudwatch_logs
-        Match   *
-        region us-east-1
-        log_group_name eks-pods-logs
-        log_stream_prefix from-eks-pods-
-        auto_create_group true
-        log_key log
-    EOT
-    "parsers.conf" = <<-EOT
-      [PARSER]
-        Name crio
-        Format Regex
-        Regex ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>P|F) (?<log>.*)$
-        Time_Key    time
-        Time_Format %Y-%m-%dT%H:%M:%S.%L%z
-    EOT
-  }
-
-  depends_on = [
-    aws_eks_cluster.cloud_tech_demo,
-    kubernetes_namespace.aws_observability
-  ]
-}
-
-data "kubectl_path_documents" "cert_manager" {
-  pattern = "components/manifest/cert-manager.yaml"
-}
-
-resource "kubectl_manifest" "cert_manager" {
-  for_each  = data.kubectl_path_documents.cert_manager.manifests
-  yaml_body = each.value
-
-  depends_on = [
-    # aws_eks_fargate_profile.cert_manager,
-    kubernetes_config_map.aws_observability
-  ]
-}
-
-data "kubectl_path_documents" "ingress_alb_controller" {
-  pattern = "components/manifest/v2_4_1_full.yaml"
-}
-
-resource "kubectl_manifest" "ingress_alb_controller" {
-  for_each  = data.kubectl_path_documents.ingress_alb_controller.manifests
-  yaml_body = each.value
-
-  depends_on = [
-    kubectl_manifest.cert_manager,
-    # aws_eks_fargate_profile.kube_system,
-    kubernetes_service_account.cloud_tech_demo
-  ]
-}
-
-# SSL Cert
-# resource "aws_acm_certificate" "cert" {
-#   domain_name       = "prometheus.${var.hosted_zone_name}"
-#   subject_alternative_names = ["grafana.${var.hosted_zone_name}"]
-#   validation_method = "DNS"
-
-#   lifecycle {
-#     create_before_destroy = true
-#   }
-
-#   tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "prometheus.${var.hosted_zone_name}-cert" }))
+#   tags = merge(var.cloud_tech_demo_tags,
+#     tomap({ "alpha.eksctl.io/cluster-name" = aws_eks_cluster.cloud_tech_demo.name }),
+#     tomap({ "eksctl.cluster.k8s.io/v1alpha1/cluster-name" = aws_eks_cluster.cloud_tech_demo.name }),
+#     tomap({ "alpha.eksctl.io/iamserviceaccount-name" = "kube-system/aws-load-balancer-controller" }),
+#     tomap({ "alpha.eksctl.io/eksctl-version" = "0.79.0" }),
+#   tomap({ "Name" = "aws-load-balancer-controller" }))
 # }
 
-# data "aws_route53_zone" "cloud_tech_demo" {
-#   name         = var.hosted_zone_name
-#   private_zone = false
+# resource "aws_iam_policy" "ingress_policy" {
+#   name        = "AWSLoadBalancerControllerIAMPolicy"
+#   path        = "/"
+#   description = "ALB Ingress Controller IAM Policy"
+#   policy      = file("components/policy/iam-policy.json")
+
+#   tags = merge(var.cloud_tech_demo_tags, tomap({ "Name" = "AWSLoadBalancerControllerIAMPolicy" }))
 # }
 
-# resource "aws_route53_record" "cert" {
-#   for_each = {
-#     for dvo in aws_acm_certificate.cert.domain_validation_options : dvo.domain_name => {
-#       name   = dvo.resource_record_name
-#       record = dvo.resource_record_value
-#       type   = dvo.resource_record_type
+# resource "aws_iam_role_policy_attachment" "aws_load_balancer_controller_role_AWSLoadBalancerControllerIAMPolicy" {
+#   role       = aws_iam_role.aws_load_balancer_controller_role.name
+#   policy_arn = aws_iam_policy.ingress_policy.arn
+# }
+
+
+# #SERVICE ACCOUNT
+# resource "kubernetes_service_account" "cloud_tech_demo" {
+#   metadata {
+#     name      = "aws-load-balancer-controller"
+#     namespace = "kube-system"
+#     labels = {
+#       "app.kubernetes.io/name"      = "aws-load-balancer-controller"
+#       "app.kubernetes.io/component" = "controller"
 #     }
-#   }
-
-#   allow_overwrite = true
-#   name            = each.value.name
-#   records         = [each.value.record]
-#   ttl             = 60
-#   type            = each.value.type
-#   zone_id         = data.aws_route53_zone.cloud_tech_demo.zone_id
-# }
-
-# resource "aws_acm_certificate_validation" "cert" {
-#   certificate_arn         = aws_acm_certificate.cert.arn
-#   validation_record_fqdns = [for record in aws_route53_record.cert : record.fqdn]
-# }
-
-# resource "kubernetes_namespace" "dummy" {
-#   metadata {
-#     name = "dummy"
-#   }
-#   depends_on = [
-#     kubectl_manifest.ingress_alb_controller,
-#     aws_nat_gateway.nat,
-#     aws_route.private_nat_gateway
-#   ]
-# }
-
-# resource "kubernetes_service_v1" "dummy" {
-#   metadata {
-#     name      = "dummy-service"
-#     namespace = kubernetes_namespace.dummy.metadata[0].name
-#   }
-#   spec {
-#     port {
-#       port        = 80
-#       target_port = 80
-#       protocol    = "TCP"
-#     }
-#     type = "NodePort"
-#   }
-# }
-
-# resource "kubernetes_ingress_v1" "dummy_80" {
-#   wait_for_load_balancer = true
-
-#   metadata {
-#     name      = "dummy-80"
-#     namespace = kubernetes_namespace.dummy.metadata[0].name
 #     annotations = {
-#       "alb.ingress.kubernetes.io/load-balancer-name" = var.alb_name
-#       "alb.ingress.kubernetes.io/group.name"         = "stage.group"
-#       "alb.ingress.kubernetes.io/tags"               = join(",", [for key, value in var.cloud_tech_demo_tags : "${key}=${value}"])
-#       "alb.ingress.kubernetes.io/scheme"             = "internet-facing"
-#       "alb.ingress.kubernetes.io/subnets"            = local.public_subnet_ids
-#       "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTP\": 80}]"
-#       "alb.ingress.kubernetes.io/ssl-redirect"       = 443
-#       "alb.ingress.kubernetes.io/target-type"        = "ip"
-#       "alb.ingress.kubernetes.io/backend-protocol"   = "HTTP"
-#       "nginx.ingress.kubernetes.io/rewrite-target"   = "/"
-#     }
-#   }
-
-#   spec {
-#     ingress_class_name = "alb"
-#     rule {
-#       host = "dummy.${var.hosted_zone_name}"
-#       http {
-#         path {
-#           path_type = "ImplementationSpecific"
-#           backend {
-#             service {
-#               name = kubernetes_service_v1.dummy.metadata.0.name
-#               port {
-#                 number = 80
-#               }
-#             }
-#           }
-#         }
-#       }
+#       "eks.amazonaws.com/role-arn" = aws_iam_role.aws_load_balancer_controller_role.arn
 #     }
 #   }
 
 #   depends_on = [
-#     kubectl_manifest.ingress_alb_controller
+#     aws_eks_cluster.cloud_tech_demo,
+#     aws_iam_role.aws_load_balancer_controller_role,
 #   ]
 # }
 
-# resource "kubernetes_ingress_v1" "dummy_443" {
-#   wait_for_load_balancer = true
-
+# #RBAC ROLE
+# resource "kubernetes_cluster_role" "rbac_role" {
 #   metadata {
-#     name      = "dummy-443"
-#     namespace = kubernetes_namespace.dummy.metadata[0].name
-#     annotations = {
-#       "alb.ingress.kubernetes.io/load-balancer-name" = var.alb_name
-#       "alb.ingress.kubernetes.io/group.name"         = "stage.group"
-#       "alb.ingress.kubernetes.io/tags"               = join(",", [for key, value in var.cloud_tech_demo_tags : "${key}=${value}"])
-#       "alb.ingress.kubernetes.io/scheme"             = "internet-facing"
-#       "alb.ingress.kubernetes.io/subnets"            = local.public_subnet_ids
-#       "alb.ingress.kubernetes.io/listen-ports"       = "[{\"HTTPS\": 443}]"
-#       "alb.ingress.kubernetes.io/certificate-arn"    = aws_acm_certificate.cert.arn
-#       "alb.ingress.kubernetes.io/ssl-redirect"       = 443
-#       "alb.ingress.kubernetes.io/target-type"        = "ip"
-#       "alb.ingress.kubernetes.io/backend-protocol"   = "HTTPS"
-#       "nginx.ingress.kubernetes.io/rewrite-target"   = "/"
+#     name = "aws-load-balancer-controller"
+#     labels = {
+#       "app.kubernetes.io/name" = "aws-load-balancer-controller"
 #     }
 #   }
 
-#   spec {
-#     ingress_class_name = "alb"
-#     rule {
-#       host = "dummy.${var.hosted_zone_name}"
-#       http {
-#         path {
-#           path_type = "ImplementationSpecific"
-#           backend {
-#             service {
-#               name = kubernetes_service_v1.dummy.metadata.0.name
-#               port {
-#                 number = 80
-#               }
-#             }
-#           }
-#         }
-#       }
-#     }
+#   rule {
+#     api_groups = ["", "extensions"]
+#     resources  = ["configmaps", "endpoints", "events", "ingresses", "ingresses/status", "services"]
+#     verbs      = ["create", "get", "list", "update", "watch", "patch"]
+#   }
+
+#   rule {
+#     api_groups = ["", "extensions"]
+#     resources  = ["nodes", "pods", "secrets", "services", "namespaces"]
+#     verbs      = ["get", "list", "watch"]
 #   }
 
 #   depends_on = [
-#     kubectl_manifest.ingress_alb_controller
+#     aws_eks_cluster.cloud_tech_demo
 #   ]
 # }
 
-# data "aws_elb_hosted_zone_id" "main" {}
-
-# resource "aws_route53_record" "cloud_tech_demo_ingress" {
-#   zone_id = var.cloud_tech_demo_hosted_zone_id
-#   name    = "${var.alb_name}.${var.region}.${var.hosted_zone_name}"
-#   type    = "A"
-
-#   alias {
-#     name                   = kubernetes_ingress_v1.dummy_80.status.0.load_balancer.0.ingress.0.hostname
-#     zone_id                = data.aws_elb_hosted_zone_id.main.id
-#     evaluate_target_health = true
+# resource "kubernetes_cluster_role_binding" "rbac_role" {
+#   metadata {
+#     name = "aws-load-balancer-controller"
+#     labels = {
+#       "app.kubernetes.io/name" = "aws-load-balancer-controller"
+#     }
 #   }
+
+#   role_ref {
+#     api_group = "rbac.authorization.k8s.io"
+#     kind      = "ClusterRole"
+#     name      = "aws-load-balancer-controller"
+#   }
+
+#   subject {
+#     kind      = "ServiceAccount"
+#     name      = "aws-load-balancer-controller"
+#     namespace = "kube-system"
+#   }
+
+#   depends_on = [
+#     aws_eks_cluster.cloud_tech_demo,
+#     kubernetes_cluster_role.rbac_role
+#   ]
 # }
+
+# #CLOUDWATCH SETUP
+# resource "kubernetes_namespace" "aws_observability" {
+#   metadata {
+#     labels = {
+#       aws-observability = "enabled"
+#     }
+#     name = var.logs_namespace
+#   }
+
+#   depends_on = [
+#     aws_eks_cluster.cloud_tech_demo
+#   ]
+# }
+
+# resource "kubernetes_config_map" "aws_observability" {
+#   metadata {
+#     name      = "aws-logging"
+#     namespace = var.logs_namespace
+#   }
+
+#   data = {
+#     "filters.conf" = <<-EOT
+#       [FILTER]
+#         Name parser
+#         Match *
+#         Key_name log
+#         Parser crio
+#     EOT
+#     "output.conf"  = <<-EOT
+#       [OUTPUT]
+#         Name cloudwatch_logs
+#         Match   *
+#         region us-east-1
+#         log_group_name eks-pods-logs
+#         log_stream_prefix from-eks-pods-
+#         auto_create_group true
+#         log_key log
+#     EOT
+#     "parsers.conf" = <<-EOT
+#       [PARSER]
+#         Name crio
+#         Format Regex
+#         Regex ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>P|F) (?<log>.*)$
+#         Time_Key    time
+#         Time_Format %Y-%m-%dT%H:%M:%S.%L%z
+#     EOT
+#   }
+
+#   depends_on = [
+#     aws_eks_cluster.cloud_tech_demo,
+#     kubernetes_namespace.aws_observability
+#   ]
+# }
+
+# data "kubectl_path_documents" "cert_manager" {
+#   pattern = "components/manifest/cert-manager.yaml"
+# }
+
+# resource "kubectl_manifest" "cert_manager" {
+#   for_each  = data.kubectl_path_documents.cert_manager.manifests
+#   yaml_body = each.value
+
+#   depends_on = [
+#     # aws_eks_fargate_profile.cert_manager,
+#     kubernetes_config_map.aws_observability
+#   ]
+# }
+
+# data "kubectl_path_documents" "ingress_alb_controller" {
+#   pattern = "components/manifest/v2_4_1_full.yaml"
+# }
+
+# resource "kubectl_manifest" "ingress_alb_controller" {
+#   for_each  = data.kubectl_path_documents.ingress_alb_controller.manifests
+#   yaml_body = each.value
+
+#   depends_on = [
+#     kubectl_manifest.cert_manager,
+#     # aws_eks_fargate_profile.kube_system,
+#     kubernetes_service_account.cloud_tech_demo
+#   ]
+# }
+
